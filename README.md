@@ -57,6 +57,86 @@ npm run dev
 
 Acesse http://localhost:5173 (o Vite já faz proxy de `/api` para `http://localhost:8000`).
 
+## Deploy em produção
+
+O projeto está publicado no Google Cloud, projeto `calculadora-gcp`:
+
+- **Frontend**: Firebase Hosting — https://calculadora-gcp.web.app
+- **Backend**: Cloud Run — serviço `calculadora-gcp-backend`, região `us-central1`
+
+O Firebase Hosting redireciona toda rota `/api/**` para o serviço do Cloud
+Run (configurado em `firebase.json`), então o frontend chama a API por
+caminho relativo (`/api/...`) sem problema de CORS.
+
+### Pré-requisitos (uma vez só)
+
+```bash
+npm install -g firebase-tools
+firebase login
+gcloud auth login
+gcloud config set project calculadora-gcp
+```
+
+### Atualizar o backend (Cloud Run)
+
+Sempre que mudar algo em `backend/`:
+
+```bash
+cd backend
+gcloud run deploy calculadora-gcp-backend \
+  --source . \
+  --region us-central1 \
+  --project calculadora-gcp \
+  --allow-unauthenticated \
+  --port 8000
+```
+
+Isso builda a imagem via Cloud Build e atualiza o serviço em produção. Não
+precisa mexer no `firebase.json` — o `serviceId`/`region` já apontam para
+esse serviço.
+
+### Atualizar o frontend (Firebase Hosting)
+
+Sempre que mudar algo em `frontend/`:
+
+```bash
+cd frontend
+npm run build      # gera frontend/dist
+cd ..
+firebase deploy --only hosting
+```
+
+**Atenção**: nunca rode `firebase init hosting` de novo neste projeto sem
+cuidado — ele sobrescreve o `firebase.json` e apaga o rewrite `/api/**` para
+o Cloud Run, deixando a API inacessível (o site carrega mas mostra erro de
+conexão). Se isso acontecer, o `firebase.json` deve conter, nessa ordem:
+
+```json
+{
+  "hosting": {
+    "public": "frontend/dist",
+    "rewrites": [
+      {
+        "source": "/api/**",
+        "run": { "serviceId": "calculadora-gcp-backend", "region": "us-central1" }
+      },
+      { "source": "**", "destination": "/index.html" }
+    ]
+  }
+}
+```
+
+A regra do `/api/**` tem que vir **antes** da regra genérica `**`, senão o
+catch-all do SPA intercepta as chamadas de API primeiro.
+
+### Deploy completo (backend + frontend)
+
+```bash
+cd backend && gcloud run deploy calculadora-gcp-backend --source . --region us-central1 --project calculadora-gcp --allow-unauthenticated --port 8000 && cd ..
+cd frontend && npm run build && cd ..
+firebase deploy --only hosting
+```
+
 ## Aviso sobre os preços
 
 Os valores usados são preços públicos on-demand (sem desconto por
