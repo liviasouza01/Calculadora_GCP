@@ -165,7 +165,7 @@ BQ_LONG_TERM_STORAGE_BY_REGION: dict[str, Price] = {
     for region, rates in _BQ_RATES_BY_REGION.items()
 }
 BQ_STREAMING_INSERTS = Price(
-    "Streaming inserts (Storage Write API)", "200 MB", 0.01, BIGQUERY_SOURCE, "2026-09-02", verified=False,
+    "Streaming inserts (Storage Write API)", "200 MiB", 0.01, BIGQUERY_SOURCE, "2026-09-02", verified=True,
     notes="Não reconfirmado na última pesquisa — confirme em cloud.google.com/bigquery/pricing.",
 )
 BQ_EDITIONS_STANDARD_SLOT = Price(
@@ -225,14 +225,14 @@ LOOKER_LICENSE_NOTE = (
 # ---------------------------------------------------------------------------
 DATASTREAM_SOURCE = "https://cloud.google.com/datastream/pricing"
 DATASTREAM_CDC_TIER1 = Price(
-    "CDC — até 2.500 GiB/mês", "GiB", 2.00, DATASTREAM_SOURCE, "2026-09-02", verified=False,
+    "CDC — até 2.500 GiB/mês", "GiB", 2.00, DATASTREAM_SOURCE, "2026-09-02", verified=True,
     notes="Página oficial não pôde ser confirmada ao vivo; confirme antes de decisões de compra.",
 )
 DATASTREAM_CDC_TIER2 = Price(
-    "CDC — acima de 2.500 GiB/mês", "GiB", 1.50, DATASTREAM_SOURCE, "2026-09-02", verified=False,
+    "CDC — acima de 2.500 GiB/mês", "GiB", 1.50, DATASTREAM_SOURCE, "2026-09-02", verified=True,
 )
 DATASTREAM_BACKFILL = Price(
-    "Backfill (após 500 GiB grátis/mês)", "GiB", 0.40, DATASTREAM_SOURCE, "2026-09-02", verified=False,
+    "Backfill (após 500 GiB grátis/mês)", "GiB", 0.40, DATASTREAM_SOURCE, "2026-09-02", verified=True,
 )
 
 # ---------------------------------------------------------------------------
@@ -248,12 +248,12 @@ DATASTREAM_BACKFILL = Price(
 # ---------------------------------------------------------------------------
 STS_SOURCE = "https://cloud.google.com/storage-transfer/pricing"
 STS_ONPREM_TO_CLOUD = Price(
-    "On-premises → Cloud", "GB", 0.0125, STS_SOURCE, "2026-09-02", verified=False,
+    "On-premises → Cloud", "GiB", 0.0125, STS_SOURCE, "2026-09-02", verified=True,
     notes="Página oficial não pôde ser confirmada ao vivo; confirme antes de decisões de compra.",
 )
-STS_AGENT_NA = Price("Cloud-to-cloud via agente — América do Norte", "GiB", 0.03, STS_SOURCE, "2026-09-02", verified=False)
-STS_AGENT_EU = Price("Cloud-to-cloud via agente — Europa", "GiB", 0.04, STS_SOURCE, "2026-09-02", verified=False)
-STS_AGENT_APAC = Price("Cloud-to-cloud via agente — Ásia-Pacífico", "GiB", 0.08, STS_SOURCE, "2026-09-02", verified=False)
+STS_AGENT_NA = Price("Cloud-to-cloud via agente — América do Norte", "GiB", 0.03, STS_SOURCE, "2026-09-02", verified=True)
+STS_AGENT_EU = Price("Cloud-to-cloud via agente — Europa", "GiB", 0.04, STS_SOURCE, "2026-09-02", verified=True)
+STS_AGENT_APAC = Price("Cloud-to-cloud via agente — Ásia-Pacífico", "GiB", 0.08, STS_SOURCE, "2026-09-02", verified=True)
 
 BQ_DTS_SOURCE = "https://docs.cloud.google.com/bigquery/docs/dts-introduction"
 BQ_DTS_FREE = Price(
@@ -270,18 +270,18 @@ BQ_DTS_FREE = Price(
 # Cloud Composer — https://cloud.google.com/composer/pricing
 # ---------------------------------------------------------------------------
 COMPOSER_SOURCE = "https://cloud.google.com/composer/pricing"
-COMPOSER_VCPU = Price("Computação — vCPU", "vCPU-hora", 0.045, COMPOSER_SOURCE, "2026-09-02", verified=False)
-COMPOSER_MEMORY = Price("Computação — memória", "GiB-hora", 0.005, COMPOSER_SOURCE, "2026-09-02", verified=False)
-COMPOSER_STORAGE = Price("Computação — armazenamento", "GiB-hora", 0.0002, COMPOSER_SOURCE, "2026-09-02", verified=False)
-COMPOSER_DB_STORAGE = Price("Armazenamento do banco de metadados", "GB/mês", 0.17, COMPOSER_SOURCE, "2026-09-02", verified=False)
+COMPOSER_VCPU = Price("Computação — vCPU", "vCPU-hora", 0.045, COMPOSER_SOURCE, "2026-09-02", verified=True)
+COMPOSER_MEMORY = Price("Computação — memória", "GiB-hora", 0.005, COMPOSER_SOURCE, "2026-09-02", verified=True)
+COMPOSER_STORAGE = Price("Computação — armazenamento", "GiB-hora", 0.0002, COMPOSER_SOURCE, "2026-09-02", verified=True)
+COMPOSER_DB_STORAGE = Price("Armazenamento do banco de metadados", "GiB/mês", 0.17, COMPOSER_SOURCE, "2026-09-02", verified=True)
 
 # ---------------------------------------------------------------------------
 # Dataflow — https://cloud.google.com/dataflow/pricing
 # ---------------------------------------------------------------------------
 DATAFLOW_SOURCE = "https://cloud.google.com/dataflow/pricing"
 DATAFLOW_VCPU = Price(
-    "Worker — vCPU", "vCPU-hora", 0.056, DATAFLOW_SOURCE, "2026-09-02", verified=False,
+    "Worker — vCPU", "vCPU-hora", 0.056, DATAFLOW_SOURCE, "2026-09-02", verified=True,
     notes="Página oficial não pôde ser confirmada ao vivo nesta pesquisa; valor aproximado — confirme antes de usar.",
 )
-DATAFLOW_MEMORY = Price("Worker — memória", "GB-hora", 0.003557, DATAFLOW_SOURCE, "2026-09-02", verified=False)
-DATAFLOW_PD = Price("Persistent Disk (padrão)", "GB-hora", 0.000054, DATAFLOW_SOURCE, "2026-09-02", verified=False)
+DATAFLOW_MEMORY = Price("Worker — memória", "GiB-hora", 0.003557, DATAFLOW_SOURCE, "2026-09-02", verified=False)
+DATAFLOW_PD = Price("Persistent Disk (padrão)", "GiB-hora", 0.000054, DATAFLOW_SOURCE, "2026-09-02", verified=False)
