@@ -57,6 +57,19 @@ npm run dev
 
 Acesse http://localhost:5173 (o Vite já faz proxy de `/api` para `http://localhost:8000`).
 
+### Agente (preencher a partir de briefing)
+
+Na interface, anexe uma ou várias transcrições (PDF, TXT ou Word) e, se quiser, um ou vários PNG/JPG da arquitetura. O backend usa o [Agent Development Kit](https://google.github.io/adk-docs/get-started/python/) da Google (`Agent` + `FunctionTool` + `Runner`).
+
+Defina a chave do Gemini no ambiente do backend:
+
+```bash
+export GOOGLE_API_KEY="sua-chave"
+export GOOGLE_GENAI_USE_VERTEXAI=FALSE
+```
+
+No Docker Compose, as mesmas variáveis são lidas do ambiente da máquina (ou de um `.env` na raiz). No Cloud Run, configure `GOOGLE_API_KEY` como variável/secret do serviço.
+
 ## Deploy em produção
 
 O projeto está publicado no Google Cloud, projeto `calculadora-gcp`:

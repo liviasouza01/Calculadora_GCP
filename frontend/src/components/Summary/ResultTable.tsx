@@ -1,15 +1,9 @@
 import type { CalculationResult } from "../../types";
+import { money } from "../../format";
 
 interface Props {
   result: CalculationResult;
 }
-
-const currencyFormatter = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 4,
-});
 
 export function ResultTable({ result }: Props) {
   if (result.line_items.length === 0) {
@@ -46,15 +40,15 @@ export function ResultTable({ result }: Props) {
               <td>
                 {item.quantity} {item.unit}
               </td>
-              <td>{currencyFormatter.format(item.unit_price)}</td>
-              <td>{currencyFormatter.format(item.subtotal)}</td>
+              <td>{money.format(item.unit_price)}</td>
+              <td>{money.format(item.subtotal)}</td>
             </tr>
           ))}
         </tbody>
         <tfoot>
           <tr>
             <td colSpan={3}>Total estimado</td>
-            <td>{currencyFormatter.format(result.total)}</td>
+            <td>{money.format(result.total)}</td>
           </tr>
         </tfoot>
       </table>
