@@ -1,44 +1,62 @@
-import type { CalculationResult } from "../types";
+import type { CalculationResult, ServiceDefinition } from "../types";
+import { downloadProjectReport } from "../export/reportPdf";
+import { money } from "../format";
 
 interface Props {
+  services: ServiceDefinition[];
   results: Record<string, CalculationResult | null>;
 }
 
-const currencyFormatter = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-  minimumFractionDigits: 2,
-});
-
-export function ProjectSummary({ results }: Props) {
+export function ProjectSummary({ services, results }: Props) {
+  const names = new Map(services.map((service) => [service.id, service.name]));
   const active = Object.values(results).filter(
-    (r): r is CalculationResult => r !== null,
+    (result): result is CalculationResult => result !== null,
   );
-  const grandTotal = active.reduce((sum, r) => sum + r.total, 0);
+  const grandTotal = active.reduce((sum, result) => sum + result.total, 0);
 
   return (
     <aside className="project-summary">
-      <h2>Resumo do projeto</h2>
+      <div className="section-heading section-heading--compact">
+        <span className="section-heading__step">3</span>
+        <div>
+          <h2>Resumo</h2>
+          <p>Total mensal estimado</p>
+        </div>
+      </div>
       {active.length === 0 ? (
-        <p>Selecione ao menos um componente para estimar o custo do projeto.</p>
+        <p className="project-summary__empty">
+          Marque os serviços à esquerda ou envie um briefing para ver o total.
+        </p>
       ) : (
         <ul>
-          {active.map((r) => (
-            <li key={r.service_id}>
-              <span>{r.service_id}</span>
-              <span>{currencyFormatter.format(r.total)}</span>
+          {active.map((result) => (
+            <li key={result.service_id}>
+              <span>{names.get(result.service_id) ?? result.service_id}</span>
+              <span>{money.format(result.total)}</span>
             </li>
           ))}
         </ul>
       )}
       <div className="project-summary__total">
-        <span>Total mensal estimado</span>
-        <strong>{currencyFormatter.format(grandTotal)}</strong>
+        <span>Total / mês</span>
+        <strong>{money.format(grandTotal)}</strong>
       </div>
+      <button
+        type="button"
+        className="project-summary__export"
+        disabled={active.length === 0}
+        onClick={() =>
+          downloadProjectReport({
+            services,
+            results: active,
+          })
+        }
+      >
+        Exportar relatório em PDF
+      </button>
       <p className="project-summary__disclaimer">
-        Estimativa baseada em preços públicos do Google Cloud (região US),
-        sem descontos por compromisso de uso, sem impostos. Valores reais podem
-        variar por região, negociação comercial e uso real.
+        Preços públicos do Google Cloud (região US), sem compromisso de uso e
+        sem impostos. Confirme na fonte oficial antes de decidir.
       </p>
     </aside>
   );

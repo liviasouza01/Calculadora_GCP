@@ -3,10 +3,12 @@ import type { CalculationResult, ServiceDefinition, ServiceInputs } from "../typ
 import { calculateService } from "../api/client";
 import { ServiceForm } from "./ServiceForm/ServiceForm";
 import { ResultTable } from "./Summary/ResultTable";
+import { moneyShort } from "../format";
 
 interface Props {
   service: ServiceDefinition;
   enabled: boolean;
+  presetInputs?: ServiceInputs | null;
   onToggle: (enabled: boolean) => void;
   onResult: (result: CalculationResult | null) => void;
 }
@@ -19,10 +21,17 @@ function defaultInputs(service: ServiceDefinition): ServiceInputs {
   return inputs;
 }
 
-export function ServicePanel({ service, enabled, onToggle, onResult }: Props) {
+export function ServicePanel({ service, enabled, presetInputs, onToggle, onResult }: Props) {
   const [inputs, setInputs] = useState<ServiceInputs>(() => defaultInputs(service));
   const [result, setResult] = useState<CalculationResult | null>(null);
   const [showReferences, setShowReferences] = useState(false);
+
+  useEffect(() => {
+    if (!presetInputs) {
+      return;
+    }
+    setInputs((prev) => ({ ...defaultInputs(service), ...prev, ...presetInputs }));
+  }, [presetInputs, service]);
 
   useEffect(() => {
     if (!enabled) {
@@ -67,6 +76,9 @@ export function ServicePanel({ service, enabled, onToggle, onResult }: Props) {
             <p>{service.description}</p>
           </div>
         </label>
+        {enabled && result ? (
+          <span className="service-panel__cost">{moneyShort.format(result.total)}/mês</span>
+        ) : null}
       </header>
 
       {enabled ? (

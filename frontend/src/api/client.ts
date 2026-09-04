@@ -49,3 +49,29 @@ export function calculateProject(items: ProjectItem[]): Promise<ProjectResult> {
     body: JSON.stringify({ items }),
   });
 }
+
+export interface AgentFillResult {
+  filled_services: Record<string, ServiceInputs>;
+  summary: string;
+}
+
+export async function fillFromBriefing(formData: FormData): Promise<AgentFillResult> {
+  const response = await fetch(`${BASE_URL}/agent/fill`, {
+    method: "POST",
+    body: formData,
+  });
+  if (!response.ok) {
+    const raw = await response.text();
+    let message = raw;
+    try {
+      const parsed = JSON.parse(raw) as { detail?: unknown };
+      if (typeof parsed.detail === "string") {
+        message = parsed.detail;
+      }
+    } catch {
+      message = raw;
+    }
+    throw new Error(message);
+  }
+  return response.json() as Promise<AgentFillResult>;
+}

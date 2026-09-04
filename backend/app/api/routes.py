@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 
+from app.agent.runner import Attachment, run_fill_agent
 from app.domain.calculators.registry import get_calculator, list_definitions
 from app.domain.schemas import (
     CalculationResult,
@@ -45,3 +46,52 @@ def calculate_project(request: ProjectCalculationRequest) -> ProjectCalculationR
 
     grand_total = sum(result.total for result in results)
     return ProjectCalculationResult(results=results, grand_total=grand_total)
+
+
+async def _read_uploads(files: list[UploadFile] | None) -> list[Attachment]:
+    attachments: list[Attachment] = []
+    for upload in files or []:
+        data = await upload.read()
+        if not data:
+            continue
+        attachments.append(Attachment(name=upload.filename or "arquivo", data=data))
+    return attachments
+
+
+@router.post("/agent/fill")
+async def fill_from_briefing(
+    conversations: list[UploadFile] = File(...),
+    architectures: list[UploadFile] | None = File(None),
+    notes: str = Form(""),
+) -> dict:
+    conversation_files = await _read_uploads(conversations)
+    if not conversation_files:
+        raise HTTPException(
+            status_code=400,
+            detail="Anexe ao menos uma transcrição da conversa (PDF, TXT ou Word).",
+        )
+    architecture_files = await _read_uploads(architectures)
+
+    try:
+        result = await run_fill_agent(
+            conversations=conversation_files,
+            architectures=architecture_files,
+            notes=notes,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"Falha ao executar o agente: {exc}") from exc
+
+    if not result.filled_services:
+        raise HTTPException(
+            status_code=422,
+            detail=result.summary or "O agente não identificou serviços para preencher.",
+        )
+
+    return {
+        "filled_services": result.filled_services,
+        "summary": result.summary,
+    }
