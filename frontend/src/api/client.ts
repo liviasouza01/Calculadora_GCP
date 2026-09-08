@@ -54,6 +54,7 @@ export interface AgentFillResult {
   filled_services: Record<string, ServiceInputs>;
   filled_as_is?: Record<string, ServiceInputs>;
   filled_to_be?: Record<string, ServiceInputs>;
+  summary: string;
   architecture_image?: string | null;
 }
 
