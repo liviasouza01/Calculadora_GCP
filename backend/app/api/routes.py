@@ -72,12 +72,12 @@ async def fill_from_briefing(
     if not uploaded and not notes.strip():
         raise HTTPException(
             status_code=400,
-            detail="Descreva o projeto ou anexe arquivos (PDF, TXT, Word, PNG ou JPG).",
+            detail="Descreva o projeto ou anexe arquivos (PDF, TXT, CSV, Excel, Word, PNG ou JPG).",
         )
     if intent in {"compare", "complement"} and not uploaded:
         raise HTTPException(
             status_code=400,
-            detail="Anexe a calculadora atual (PDF, print, Word ou TXT).",
+            detail="Anexe a calculadora atual (PDF, print, CSV, Excel, Word ou TXT).",
         )
     allowed = {"gcp", "azure", "aws", "databricks", "multicloud"}
     if source_provider not in allowed or target_provider not in allowed:

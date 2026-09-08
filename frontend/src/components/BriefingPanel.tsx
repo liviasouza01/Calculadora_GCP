@@ -9,7 +9,7 @@ interface Props {
 }
 
 const ACCEPT =
-  ".pdf,.txt,.docx,.png,.jpg,.jpeg,application/pdf,text/plain,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/png,image/jpeg";
+  ".pdf,.txt,.csv,.xlsx,.xls,.docx,.png,.jpg,.jpeg,application/pdf,text/plain,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/png,image/jpeg";
 
 function fileNames(files: FileList | null): string[] {
   if (!files) {
@@ -39,7 +39,7 @@ export function BriefingPanel({ onFilled }: Props) {
         ? Array.from(filesField.files)
         : [];
     if (uploaded.length === 0) {
-      setError("Anexe ao menos um arquivo (PDF, TXT, Word, PNG ou JPG).");
+      setError("Anexe ao menos um arquivo (PDF, TXT, CSV, Excel, Word, PNG ou JPG).");
       return;
     }
 
@@ -87,7 +87,7 @@ export function BriefingPanel({ onFilled }: Props) {
             onChange={handleFilesChange}
           />
           <strong>Arquivos</strong>
-          <span>PDF, TXT, Word, PNG ou JPG. Clique ou arraste vários arquivos.</span>
+          <span>PDF, TXT, CSV, Excel, Word, PNG ou JPG. Clique ou arraste vários arquivos.</span>
           {names.length > 0 ? (
             <ul>
               {names.map((name, index) => (

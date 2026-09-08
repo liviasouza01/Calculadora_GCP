@@ -15,7 +15,7 @@ interface Props {
 }
 
 const ACCEPT =
-  ".pdf,.txt,.docx,.png,.jpg,.jpeg,application/pdf,text/plain,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/png,image/jpeg";
+  ".pdf,.txt,.csv,.xlsx,.xls,.docx,.png,.jpg,.jpeg,application/pdf,text/plain,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/png,image/jpeg";
 
 function fileNames(files: FileList | null): string[] {
   if (!files) {
@@ -53,7 +53,7 @@ export function ComparePanel({ onFilled }: Props) {
         ? Array.from(filesField.files)
         : [];
     if (uploaded.length === 0) {
-      setError("Anexe a calculadora atual (PDF, print, Word ou TXT).");
+      setError("Anexe a calculadora atual (PDF, print, CSV, Excel, Word ou TXT).");
       return;
     }
 
@@ -94,7 +94,7 @@ export function ComparePanel({ onFilled }: Props) {
         <label className={`dropzone ${names.length ? "dropzone--filled" : ""}`}>
           <input name="files" type="file" multiple accept={ACCEPT} required onChange={handleFilesChange} />
           <strong>Arquivos</strong>
-          <span>PDF, print (PNG/JPG), Word ou TXT da calculadora que o cliente já enviou.</span>
+          <span>PDF, print (PNG/JPG), CSV, Excel, Word ou TXT da calculadora que o cliente já enviou.</span>
           {names.length > 0 ? (
             <ul>
               {names.map((name, index) => (

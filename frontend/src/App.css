@@ -14,6 +14,31 @@
   margin: 0 auto;
 }
 
+.app__header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.app__clear {
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.app__clear:hover {
+  color: var(--text);
+  border-color: var(--border-strong);
+}
+
 .app__header h1 {
   font-size: clamp(1.4rem, 2.4vw, 1.85rem);
   font-weight: 700;
@@ -25,7 +50,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-top: 14px;
+  margin: 0;
 }
 
 .provider-tabs__tab {

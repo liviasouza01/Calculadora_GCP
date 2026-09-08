@@ -73,6 +73,7 @@ export default function App() {
   const [compareTarget, setCompareTarget] = useState<CompareScope | null>(null);
   const [asIsEnabled, setAsIsEnabled] = useState<Record<string, boolean>>({});
   const [toBeEnabled, setToBeEnabled] = useState<Record<string, boolean>>({});
+  const [sessionKey, setSessionKey] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -86,6 +87,26 @@ export default function App() {
     setEnabled(enabledMap(filled));
     setResults({});
     setArchitectureImage(image);
+  }
+
+  function clearSession() {
+    setChatMessages([]);
+    setChatBusy(false);
+    setChatError(null);
+    setArchitectureImage(null);
+    setEnabled({});
+    setPresets({});
+    setResults({});
+    setAsIsInputs({});
+    setToBeInputs({});
+    setAsIsResults({});
+    setToBeResults({});
+    setAsIsEnabled({});
+    setToBeEnabled({});
+    setCompareSource("gcp");
+    setCompareTarget(null);
+    setSessionKey((value) => value + 1);
+    setTab("home");
   }
 
   if (error) {
@@ -180,13 +201,19 @@ export default function App() {
       <header className="app__header">
         <div className="app__header-inner">
           {homeMode ? null : <h1>{APP_TITLE}</h1>}
-          <ProviderTabs value={tab} onChange={setTab} />
+          <div className="app__header-row">
+            <ProviderTabs value={tab} onChange={setTab} />
+            <button type="button" className="app__clear" onClick={clearSession}>
+              Limpar
+            </button>
+          </div>
         </div>
       </header>
 
       <div className={homeMode ? "app__home-wrap" : "app__content"}>
         {homeMode ? (
           <HomeChat
+            key={sessionKey}
             messages={chatMessages}
             busy={chatBusy}
             error={chatError}
@@ -195,13 +222,14 @@ export default function App() {
             onMessages={setChatMessages}
             onBusy={setChatBusy}
             onError={setChatError}
-            onComplete={(filled, _summary, image) => applyProposal(filled, image)}
+            onComplete={(filled, image) => applyProposal(filled, image)}
           />
         ) : (
           <>
         <main className="app__services">
           <div hidden={!compareMode}>
             <ComparePanel
+              key={sessionKey}
               onFilled={(asIs, toBe, source, target) => {
                 setCompareSource(source);
                 setCompareTarget(target);

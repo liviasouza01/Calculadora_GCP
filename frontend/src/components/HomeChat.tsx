@@ -19,14 +19,14 @@ interface Props {
   error: string | null;
   filledProviders: CloudProvider[];
   onOpenTab: (tab: CloudProvider) => void;
-  onComplete: (filled: Record<string, ServiceInputs>, summary: string, image: string | null) => void;
+  onComplete: (filled: Record<string, ServiceInputs>, image: string | null) => void;
   onMessages: (messages: ChatMessage[]) => void;
   onBusy: (busy: boolean) => void;
   onError: (error: string | null) => void;
 }
 
 const ACCEPT =
-  ".pdf,.txt,.docx,.png,.jpg,.jpeg,application/pdf,text/plain,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/png,image/jpeg";
+  ".pdf,.txt,.csv,.xlsx,.xls,.docx,.png,.jpg,.jpeg,application/pdf,text/plain,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/png,image/jpeg";
 
 function imageSrc(raw: string): string {
   return raw.startsWith("data:") ? raw : `data:image/png;base64,${raw}`;
@@ -96,7 +96,7 @@ export function HomeChat({
           image,
         },
       ]);
-      onComplete(result.filled_to_be ?? result.filled_services, result.summary, image);
+      onComplete(result.filled_to_be ?? result.filled_services, image);
       setText("");
       setFiles([]);
       if (fileRef.current) {
@@ -145,7 +145,7 @@ export function HomeChat({
               ) : null}
             </article>
           ))}
-          {busy ? <p className="home-chat__busy">Gerando proposta...</p> : null}
+          {busy ? <p className="home-chat__busy">Pensando...</p> : null}
           {filledProviders.length > 0 ? (
             <div className="home-chat__tabs">
               {PROVIDERS.filter((provider) => filledProviders.includes(provider.id)).map((provider) => (
@@ -202,8 +202,9 @@ export function HomeChat({
             type="button"
             className={wantArchitecture ? "home-composer__tool home-composer__tool--on" : "home-composer__tool"}
             onClick={() => setWantArchitecture((value) => !value)}
+            title="Ligado: gera o diagrama da arquitetura. Desligado: só preenche a calculadora."
           >
-            Arquitetura
+            Gerar diagrama
           </button>
           <span className="home-composer__grow" />
           <button type="submit" className="home-composer__send" disabled={busy}>
