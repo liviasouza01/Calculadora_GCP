@@ -26,6 +26,10 @@ export interface PricingReference {
   notes?: string | null;
 }
 
+export type CloudProvider = "gcp" | "azure" | "aws" | "databricks";
+export type CompareScope = CloudProvider | "multicloud";
+export type AppTab = CloudProvider | "compare" | "home";
+
 export interface ServiceDefinition {
   id: string;
   name: string;
@@ -33,6 +37,7 @@ export interface ServiceDefinition {
   description: string;
   fields: FieldSchema[];
   pricing_references: PricingReference[];
+  provider?: CloudProvider;
 }
 
 export interface LineItem {

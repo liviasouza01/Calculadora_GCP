@@ -52,7 +52,9 @@ export function calculateProject(items: ProjectItem[]): Promise<ProjectResult> {
 
 export interface AgentFillResult {
   filled_services: Record<string, ServiceInputs>;
-  summary: string;
+  filled_as_is?: Record<string, ServiceInputs>;
+  filled_to_be?: Record<string, ServiceInputs>;
+  architecture_image?: string | null;
 }
 
 export async function fillFromBriefing(formData: FormData): Promise<AgentFillResult> {

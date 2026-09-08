@@ -17,18 +17,27 @@ from app.domain.calculators.registry import get_calculator, list_definitions
 MODEL_ID = "gemini-flash-latest"
 
 
-def list_calculator_services() -> dict:
-    """Lista os serviços GCP da calculadora e os campos que cada um aceita.
+def list_calculator_services(provider: str = "") -> dict:
+    """Lista os serviços da calculadora e os campos que cada um aceita.
+
+    Args:
+        provider: gcp, azure, aws, databricks ou multicloud (lista todos). Vazio lista todos.
 
     Returns:
         dict: status e a lista de serviços com id, nome, descrição e campos.
     """
+    wanted = (provider or "").strip().lower()
+    if wanted in {"multicloud", "all", "*"}:
+        wanted = ""
     services = []
     for definition in list_definitions():
+        if wanted and definition.provider != wanted:
+            continue
         services.append(
             {
                 "id": definition.id,
                 "name": definition.name,
+                "provider": definition.provider,
                 "description": definition.description,
                 "fields": [
                     {
@@ -51,7 +60,12 @@ def list_calculator_services() -> dict:
     return {"status": "success", "services": services}
 
 
-def fill_service(service_id: str, inputs_json: str, tool_context: ToolContext) -> dict:
+def fill_service(
+    service_id: str,
+    inputs_json: str,
+    tool_context: ToolContext,
+    scenario: str = "to_be",
+) -> dict:
     """Registra os valores estimados de um serviço na sessão da calculadora.
 
     Args:
@@ -59,6 +73,7 @@ def fill_service(service_id: str, inputs_json: str, tool_context: ToolContext) -
         inputs_json: JSON com os campos do serviço, por exemplo
             '{"region":"us","storage_gb":2000}'.
         tool_context: injetado pelo ADK; não passar na chamada do modelo.
+        scenario: as_is (calculadora atual) ou to_be (proposta). Default to_be.
 
     Returns:
         dict: status success/error e os inputs aceitos.
@@ -66,6 +81,19 @@ def fill_service(service_id: str, inputs_json: str, tool_context: ToolContext) -
     calculator = get_calculator(service_id)
     if calculator is None:
         return {"status": "error", "error_message": f"Serviço desconhecido: {service_id}"}
+
+    bucket = "as_is" if str(scenario or "to_be").strip().lower() in {"as_is", "asis", "as-is"} else "to_be"
+    source = str(tool_context.state.get("source_provider") or "").strip().lower()
+    target = str(tool_context.state.get("target_provider") or "").strip().lower()
+    wanted = source if bucket == "as_is" else target
+    if wanted and wanted not in {"multicloud", "all", "*"} and calculator.definition.provider != wanted:
+        return {
+            "status": "error",
+            "error_message": (
+                f"Serviço '{service_id}' é de {calculator.definition.provider}, "
+                f"não de '{wanted}' para scenario={bucket}."
+            ),
+        }
 
     try:
         raw = json.loads(inputs_json) if inputs_json else {}
@@ -106,7 +134,16 @@ def fill_service(service_id: str, inputs_json: str, tool_context: ToolContext) -
     filled = tool_context.state.get("filled_services", {})
     filled[service_id] = coerced
     tool_context.state["filled_services"] = filled
-    return {"status": "success", "service_id": service_id, "inputs": coerced}
+    key = "filled_as_is" if bucket == "as_is" else "filled_to_be"
+    bucket_map = tool_context.state.get(key, {})
+    bucket_map[service_id] = coerced
+    tool_context.state[key] = bucket_map
+    return {
+        "status": "success",
+        "service_id": service_id,
+        "scenario": bucket,
+        "inputs": coerced,
+    }
 
 
 list_services_tool = FunctionTool(func=list_calculator_services)
@@ -116,21 +153,22 @@ root_agent = Agent(
     model=MODEL_ID,
     name="root_agent",
     description=(
-        "Interpreta transcrições de conversa e desenhos de arquitetura "
-        "para preencher a calculadora de custos GCP."
+        "Interpreta briefing ou calculadora existente e preenche custos "
+        "em Google, Azure, AWS ou Databricks."
     ),
-    instruction="""Você preenche a calculadora de custos de dados no Google Cloud.
+    instruction="""Você preenche a calculadora de Dados, ML e Visão Computacional.
 
 Fluxo obrigatório:
-1. Chame list_calculator_services para ver ids, campos e opções válidas.
-2. Leia todos os anexos: transcrições (PDF/TXT/Word) e, se houver, desenhos de arquitetura (PNG/JPG). Cruze as evidências entre os arquivos.
-3. Identifique quais serviços GCP do catálogo aparecem de fato no briefing.
-4. Para cada serviço relevante, chame fill_service com service_id e inputs_json.
-   - Use apenas ids e valores de opções retornados por list_calculator_services.
-   - Estime quantidades a partir do texto/desenho. Se o briefing não der um número, use o default do campo.
-   - Não invente serviços que não estejam no catálogo.
-   - Não preencha um serviço se não houver evidência razoável de que ele entra no projeto.
-5. Ao final, responda em português com um resumo curto: quais serviços preencheu e as premissas.
+1. Chame list_calculator_services. Se a origem/destino for multicloud, use provider='multicloud' (catálogo completo).
+2. Leia todos os anexos e as notas extras. Um PDF pode ter contas de várias nuvens ao mesmo tempo; se a origem for multicloud, preencha todos os serviços reconhecidos.
+3. Chame fill_service com service_id, inputs_json e scenario:
+   - scenario='as_is' para o que JÁ existe. Se a origem for multicloud, use ids de qualquer nuvem que aparecer no anexo.
+   - scenario='to_be' para a proposta. Se o destino for multicloud, misture nuvens conforme as notas extras.
+4. Tarefas:
+   - CONTEXTO: só scenario='to_be'. Se o destino for multicloud, use as nuvens da proposta.
+   - COMPARAR: as_is na origem e to_be no destino (destino pode ser uma nuvem ou multicloud).
+   - COMPLEMENTAR: as_is = o anexo; to_be = anexo + gaps. Destino pode ser a mesma nuvem ou multicloud.
+5. Responda em português com AS IS vs TO-BE e as premissas.
 
 Não calcule preços você mesmo. Só preencha os inputs via fill_service.""",
     tools=[list_services_tool, fill_service_tool],

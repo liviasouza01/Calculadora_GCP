@@ -5,25 +5,101 @@ calculator classes directly, so wiring a new service in is a one-line change.
 """
 from __future__ import annotations
 
+from app.domain.calculators.automl_vision import AutomlVisionCalculator
+from app.domain.calculators.aws_data import (
+    AwsAthenaCalculator,
+    AwsDataSyncCalculator,
+    AwsDmsCalculator,
+    AwsEmrCalculator,
+    AwsGlueCalculator,
+    AwsKinesisCalculator,
+    AwsMwaaCalculator,
+    AwsRedshiftCalculator,
+    AwsS3Calculator,
+)
+from app.domain.calculators.azure_data import (
+    AzureAdlsCalculator,
+    AzureDataFactoryCalculator,
+    AzureEventHubsCalculator,
+    AzureStreamAnalyticsCalculator,
+    AzureSynapseCalculator,
+    AzureSynapseSparkCalculator,
+)
 from app.domain.calculators.base import BaseCalculator
 from app.domain.calculators.bigquery import BigQueryCalculator
+from app.domain.calculators.cloud_build import CloudBuildCalculator
+from app.domain.calculators.cloud_operations import CloudOperationsCalculator
+from app.domain.calculators.cloud_run import CloudRunCalculator
 from app.domain.calculators.composer import ComposerCalculator
 from app.domain.calculators.dataflow import DataflowCalculator
 from app.domain.calculators.data_transfer import DataTransferCalculator
+from app.domain.calculators.databricks_data import (
+    DatabricksAllPurposeCalculator,
+    DatabricksDltCalculator,
+    DatabricksJobsCalculator,
+    DatabricksSqlCalculator,
+    DatabricksStorageCalculator,
+)
+from app.domain.calculators.dataproc import DataprocCalculator
 from app.domain.calculators.datastream import DatastreamCalculator
+from app.domain.calculators.feature_store import FeatureStoreCalculator
 from app.domain.calculators.looker import LookerCalculator
+from app.domain.calculators.model_monitoring import ModelMonitoringCalculator
+from app.domain.calculators.prediction import PredictionCalculator
 from app.domain.calculators.pubsub import PubSubCalculator
+from app.domain.calculators.secret_manager import SecretManagerCalculator
 from app.domain.calculators.storage import StorageCalculator
+from app.domain.calculators.training import TrainingCalculator
+from app.domain.calculators.vector_search import VectorSearchCalculator
+from app.domain.calculators.vertex_pipelines import VertexPipelinesCalculator
+from app.domain.calculators.vertex_workbench import VertexWorkbenchCalculator
+from app.domain.calculators.video_intelligence import VideoIntelligenceCalculator
+from app.domain.calculators.vision_api import VisionApiCalculator
 
 _CALCULATORS: list[BaseCalculator] = [
     StorageCalculator(),
     BigQueryCalculator(),
     LookerCalculator(),
+    TrainingCalculator(),
+    PredictionCalculator(),
+    FeatureStoreCalculator(),
+    VertexPipelinesCalculator(),
+    VertexWorkbenchCalculator(),
+    VectorSearchCalculator(),
+    ModelMonitoringCalculator(),
+    AutomlVisionCalculator(),
+    VisionApiCalculator(),
+    VideoIntelligenceCalculator(),
     DatastreamCalculator(),
     PubSubCalculator(),
     DataTransferCalculator(),
     DataflowCalculator(),
+    DataprocCalculator(),
     ComposerCalculator(),
+    CloudRunCalculator(),
+    CloudOperationsCalculator(),
+    SecretManagerCalculator(),
+    CloudBuildCalculator(),
+    AzureAdlsCalculator(),
+    AzureSynapseCalculator(),
+    AzureEventHubsCalculator(),
+    AzureStreamAnalyticsCalculator(),
+    AzureDataFactoryCalculator(),
+    AzureSynapseSparkCalculator(),
+    AwsS3Calculator(),
+    AwsAthenaCalculator(),
+    AwsRedshiftCalculator(),
+    AwsKinesisCalculator(),
+    AwsGlueCalculator(),
+    AwsDmsCalculator(),
+    AwsDataSyncCalculator(),
+    AwsEmrCalculator(),
+    AwsMwaaCalculator(),
+    DatabricksStorageCalculator(),
+    DatabricksSqlCalculator(),
+    DatabricksJobsCalculator(),
+    DatabricksAllPurposeCalculator(),
+    DatabricksDltCalculator(),
 ]
 
 REGISTRY: dict[str, BaseCalculator] = {calc.definition.id: calc for calc in _CALCULATORS}

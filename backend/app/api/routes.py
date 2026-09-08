@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 
+from app.agent.architecture import generate_architecture_png
 from app.agent.runner import Attachment, run_fill_agent
 from app.domain.calculators.registry import get_calculator, list_definitions
 from app.domain.schemas import (
@@ -60,23 +61,43 @@ async def _read_uploads(files: list[UploadFile] | None) -> list[Attachment]:
 
 @router.post("/agent/fill")
 async def fill_from_briefing(
-    conversations: list[UploadFile] = File(...),
-    architectures: list[UploadFile] | None = File(None),
+    files: list[UploadFile] | None = File(default=None),
     notes: str = Form(""),
+    intent: str = Form("context"),
+    source_provider: str = Form("gcp"),
+    target_provider: str = Form("gcp"),
+    want_architecture: str = Form("false"),
 ) -> dict:
-    conversation_files = await _read_uploads(conversations)
-    if not conversation_files:
+    uploaded = await _read_uploads(files)
+    if not uploaded and not notes.strip():
         raise HTTPException(
             status_code=400,
-            detail="Anexe ao menos uma transcrição da conversa (PDF, TXT ou Word).",
+            detail="Descreva o projeto ou anexe arquivos (PDF, TXT, Word, PNG ou JPG).",
         )
-    architecture_files = await _read_uploads(architectures)
+    if intent in {"compare", "complement"} and not uploaded:
+        raise HTTPException(
+            status_code=400,
+            detail="Anexe a calculadora atual (PDF, print, Word ou TXT).",
+        )
+    allowed = {"gcp", "azure", "aws", "databricks", "multicloud"}
+    if source_provider not in allowed or target_provider not in allowed:
+        raise HTTPException(status_code=400, detail="Provedor inválido.")
+    if intent not in {"context", "compare", "complement"}:
+        raise HTTPException(status_code=400, detail="Objetivo inválido.")
+    if (
+        intent == "compare"
+        and source_provider == target_provider
+        and source_provider != "multicloud"
+    ):
+        raise HTTPException(status_code=400, detail="Para comparar, escolha outra nuvem de destino.")
 
     try:
         result = await run_fill_agent(
-            conversations=conversation_files,
-            architectures=architecture_files,
+            files=uploaded,
             notes=notes,
+            intent=intent,
+            source_provider=source_provider,
+            target_provider=target_provider,
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -85,13 +106,32 @@ async def fill_from_briefing(
     except Exception as exc:
         raise HTTPException(status_code=502, detail=f"Falha ao executar o agente: {exc}") from exc
 
-    if not result.filled_services:
+    if intent in {"compare", "complement"}:
+        if not result.filled_as_is and not result.filled_to_be:
+            raise HTTPException(
+                status_code=422,
+                detail=result.summary or "O agente não identificou o AS IS nem o TO-BE.",
+            )
+    elif not result.filled_services:
         raise HTTPException(
             status_code=422,
             detail=result.summary or "O agente não identificou serviços para preencher.",
         )
 
+    architecture_image = None
+    if want_architecture.strip().lower() in {"1", "true", "yes", "on"}:
+        try:
+            architecture_image = generate_architecture_png(
+                result.summary,
+                result.filled_to_be or result.filled_services,
+            )
+        except Exception:
+            architecture_image = None
+
     return {
         "filled_services": result.filled_services,
+        "filled_as_is": result.filled_as_is,
+        "filled_to_be": result.filled_to_be,
         "summary": result.summary,
+        "architecture_image": architecture_image,
     }

@@ -4,6 +4,7 @@ import { calculateService } from "../api/client";
 import { ServiceForm } from "./ServiceForm/ServiceForm";
 import { ResultTable } from "./Summary/ResultTable";
 import { moneyShort } from "../format";
+import { PROVIDER_COPY } from "../providers";
 
 interface Props {
   service: ServiceDefinition;
@@ -91,7 +92,7 @@ export function ServicePanel({ service, enabled, presetInputs, onToggle, onResul
             className="link-button"
             onClick={() => setShowReferences((v) => !v)}
           >
-            {showReferences ? "Ocultar" : "Ver"} preços oficiais do Google Cloud
+            {showReferences ? "Ocultar" : "Ver"} {PROVIDER_COPY[service.provider ?? "gcp"].pricesCta}
           </button>
           {showReferences ? (
             <ul className="pricing-references">
