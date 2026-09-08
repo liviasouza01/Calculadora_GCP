@@ -48,6 +48,9 @@ class PricingReference(BaseModel):
     notes: Optional[str] = None
 
 
+CloudProvider = Literal["gcp", "azure", "aws", "databricks"]
+
+
 class ServiceDefinition(BaseModel):
     id: str
     name: str
@@ -55,6 +58,7 @@ class ServiceDefinition(BaseModel):
     description: str
     fields: list[FieldSchema]
     pricing_references: list[PricingReference]
+    provider: CloudProvider = "gcp"
 
 
 class LineItem(BaseModel):

@@ -1,25 +1,25 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
 
 :root {
-  color-scheme: light;
+  color-scheme: dark;
 
-  --bg: #f8f7fc;
-  --bg-alt: #f1edfb;
-  --surface: #ffffff;
-  --border: #e6e1f5;
-  --border-strong: #d9d0f2;
+  --bg: #000000;
+  --bg-alt: #0a0a0a;
+  --surface: #121212;
+  --border: #2a2a2a;
+  --border-strong: #3d3d3d;
 
-  --text: #1e1b2e;
-  --text-muted: #6b6584;
-  --text-faint: #9891ac;
+  --text: #f2f2f2;
+  --text-muted: #b3b3b3;
+  --text-faint: #8a8a8a;
 
-  --purple-50: #f5f1fe;
-  --purple-100: #ece4fd;
-  --purple-200: #d9c9fb;
-  --purple-500: #7c3aed;
-  --purple-600: #6d28d9;
-  --purple-700: #5b21b6;
-  --purple-900: #3b0f80;
+  --purple-50: #1a1228;
+  --purple-100: #2a1b40;
+  --purple-200: #5b3d99;
+  --purple-500: #a78bfa;
+  --purple-600: #8b5cf6;
+  --purple-700: #c4b5fd;
+  --purple-900: #ddd6fe;
 
   --primary: var(--purple-600);
   --primary-dark: var(--purple-700);
@@ -41,6 +41,7 @@
   box-sizing: border-box;
 }
 
+html,
 body {
   margin: 0;
   background: var(--bg);

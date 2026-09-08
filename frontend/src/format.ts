@@ -11,3 +11,14 @@ export const moneyShort = new Intl.NumberFormat("pt-BR", {
   minimumFractionDigits: 0,
   maximumFractionDigits: 0,
 });
+
+export function signedMoney(value: number): string {
+  const formatted = money.format(Math.abs(value));
+  if (value > 0.005) {
+    return `+${formatted}`;
+  }
+  if (value < -0.005) {
+    return `−${formatted}`;
+  }
+  return money.format(0);
+}

@@ -12,10 +12,19 @@ class LookerCalculator(BaseCalculator):
         name="Looker",
         category="Visualização e BI",
         description=(
-            "Plataforma de BI corporativo. A licença de edição/usuários é vendida sob consulta "
-            "comercial; o único custo variável publicado é o excedente de tokens do Conversational Analytics."
+            "Plataforma de BI corporativo. Licença estimada por usuário Standard "
+            "mais tokens excedentes do Conversational Analytics."
         ),
         fields=[
+            FieldSchema(
+                id="standard_users",
+                label="Usuários Standard",
+                type="number",
+                unit="usuários",
+                default=10,
+                min=0,
+                help="Estimativa de US$ 35/usuário/mês (lista típica de Standard User). A página oficial não publica o preço.",
+            ),
             FieldSchema(
                 id="extra_input_tokens_millions",
                 label="Tokens de entrada excedentes (Conversational Analytics)",
@@ -34,6 +43,7 @@ class LookerCalculator(BaseCalculator):
             ),
         ],
         pricing_references=[
+            to_reference(p.LOOKER_STANDARD_USER),
             to_reference(p.LOOKER_CONVERSATIONAL_INPUT),
             to_reference(p.LOOKER_CONVERSATIONAL_OUTPUT),
         ],
@@ -42,8 +52,10 @@ class LookerCalculator(BaseCalculator):
     def calculate(self, inputs: dict[str, float | str]) -> CalculationResult:
         extra_input = self.get_number(inputs, "extra_input_tokens_millions")
         extra_output = self.get_number(inputs, "extra_output_tokens_millions")
+        users = self.get_number(inputs, "standard_users")
 
         line_items = [
+            to_line_item(p.LOOKER_STANDARD_USER, users),
             to_line_item(p.LOOKER_CONVERSATIONAL_INPUT, extra_input),
             to_line_item(p.LOOKER_CONVERSATIONAL_OUTPUT, extra_output),
         ]
