@@ -5,6 +5,9 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 
+ARG VITE_PUBLIC_APP_URL=https://calculadora-gcp.web.app
+ENV VITE_PUBLIC_APP_URL=$VITE_PUBLIC_APP_URL
+
 COPY . .
 RUN npm run build
 

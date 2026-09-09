@@ -14,6 +14,40 @@
   margin: 0 auto;
 }
 
+.app__header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.app__clear {
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.app__header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.app__share-url {
+  margin: 10px 0 0;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  word-break: break-all;
+}
+
 .app__header h1 {
   font-size: clamp(1.4rem, 2.4vw, 1.85rem);
   font-weight: 700;
@@ -25,7 +59,14 @@
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-top: 14px;
+  margin: 0;
+  padding: 20px 18px;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  background: var(--surface);
 }
 
 .provider-tabs__tab {
@@ -639,6 +680,21 @@
 .project-summary__total strong {
   font-size: 1.25rem;
   font-weight: 800;
+}
+
+.cloud-compare {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.cloud-compare h3 {
+  margin: 0 0 8px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--purple-500);
 }
 
 .project-summary__export {

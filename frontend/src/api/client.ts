@@ -3,6 +3,7 @@ import type {
   ServiceDefinition,
   ServiceInputs,
 } from "../types";
+import { PUBLIC_APP_URL } from "../shareUrl";
 
 const BASE_URL = "/api";
 
@@ -77,4 +78,30 @@ export async function fillFromBriefing(formData: FormData): Promise<AgentFillRes
     throw new Error(message);
   }
   return response.json() as Promise<AgentFillResult>;
+}
+
+export interface CalculatorShare {
+  id: string;
+  enabled: Record<string, boolean>;
+  presets: Record<string, ServiceInputs>;
+}
+
+export async function createShare(payload: {
+  enabled: Record<string, boolean>;
+  presets: Record<string, ServiceInputs>;
+}): Promise<{ id: string; path: string }> {
+  const response = await fetch(`${PUBLIC_APP_URL}/api/shares`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    const detail = await response.text();
+    throw new Error(detail || `API error ${response.status}`);
+  }
+  return response.json() as Promise<{ id: string; path: string }>;
+}
+
+export function fetchShare(shareId: string): Promise<CalculatorShare> {
+  return request<CalculatorShare>(`/shares/${encodeURIComponent(shareId)}`);
 }

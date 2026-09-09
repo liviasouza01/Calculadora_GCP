@@ -15,17 +15,28 @@ class DatabricksJobsCalculator(BaseCalculator):
         description="Pipelines agendados (Jobs Compute classic, AWS Premium list).",
         fields=[
             FieldSchema(id="dbus", label="DBUs", type="number", unit="DBU/mês", default=200, min=0),
+            FieldSchema(
+                id="cloud_vm_hours",
+                label="VM da nuvem",
+                type="number",
+                unit="instância-hora/mês",
+                default=100,
+                min=0,
+            ),
         ],
-        pricing_references=[to_reference(p.DBX_JOBS)],
+        pricing_references=[to_reference(p.DBX_JOBS), to_reference(p.DBX_CLOUD_VM)],
     )
 
     def calculate(self, inputs: dict[str, float | str]) -> CalculationResult:
-        line_items = [to_line_item(p.DBX_JOBS, self.get_number(inputs, "dbus"))]
+        line_items = [
+            to_line_item(p.DBX_JOBS, self.get_number(inputs, "dbus")),
+            to_line_item(p.DBX_CLOUD_VM, self.get_number(inputs, "cloud_vm_hours")),
+        ]
         return CalculationResult(
             service_id=self.definition.id,
             line_items=line_items,
             total=round(sum(i.subtotal for i in line_items), 2),
-            notes=["Compute clássico: some as VMs da nuvem (AWS/Azure/GCP)."],
+            notes=["Inclui uma referência de VM AWS para o compute clássico; ajuste ao provedor contratado."],
         )
 
 
@@ -38,17 +49,28 @@ class DatabricksAllPurposeCalculator(BaseCalculator):
         description="Clusters interativos (notebooks, exploração).",
         fields=[
             FieldSchema(id="dbus", label="DBUs", type="number", unit="DBU/mês", default=80, min=0),
+            FieldSchema(
+                id="cloud_vm_hours",
+                label="VM da nuvem",
+                type="number",
+                unit="instância-hora/mês",
+                default=160,
+                min=0,
+            ),
         ],
-        pricing_references=[to_reference(p.DBX_ALL_PURPOSE)],
+        pricing_references=[to_reference(p.DBX_ALL_PURPOSE), to_reference(p.DBX_CLOUD_VM)],
     )
 
     def calculate(self, inputs: dict[str, float | str]) -> CalculationResult:
-        line_items = [to_line_item(p.DBX_ALL_PURPOSE, self.get_number(inputs, "dbus"))]
+        line_items = [
+            to_line_item(p.DBX_ALL_PURPOSE, self.get_number(inputs, "dbus")),
+            to_line_item(p.DBX_CLOUD_VM, self.get_number(inputs, "cloud_vm_hours")),
+        ]
         return CalculationResult(
             service_id=self.definition.id,
             line_items=line_items,
             total=round(sum(i.subtotal for i in line_items), 2),
-            notes=["Prefira Jobs para batch — All-Purpose é bem mais caro por DBU."],
+            notes=["Inclui uma referência de VM AWS. Prefira Jobs para batch."],
         )
 
 
@@ -71,18 +93,32 @@ class DatabricksSqlCalculator(BaseCalculator):
                 ],
             ),
             FieldSchema(id="dbus", label="DBUs", type="number", unit="DBU/mês", default=100, min=0),
+            FieldSchema(
+                id="cloud_vm_hours",
+                label="VM da nuvem (Classic)",
+                type="number",
+                unit="instância-hora/mês",
+                default=100,
+                min=0,
+            ),
         ],
-        pricing_references=[to_reference(p.DBX_SQL_CLASSIC), to_reference(p.DBX_SQL_SERVERLESS)],
+        pricing_references=[
+            to_reference(p.DBX_SQL_CLASSIC),
+            to_reference(p.DBX_SQL_SERVERLESS),
+            to_reference(p.DBX_CLOUD_VM),
+        ],
     )
 
     def calculate(self, inputs: dict[str, float | str]) -> CalculationResult:
         kind = self.get_string(inputs, "warehouse_type", "classic")
         price = p.DBX_SQL_SERVERLESS if kind == "serverless" else p.DBX_SQL_CLASSIC
         line_items = [to_line_item(price, self.get_number(inputs, "dbus"))]
+        if kind == "classic":
+            line_items.append(to_line_item(p.DBX_CLOUD_VM, self.get_number(inputs, "cloud_vm_hours")))
         notes = (
             ["Serverless já embute a infraestrutura da nuvem."]
             if kind == "serverless"
-            else ["Classic: some as VMs da nuvem no provedor."]
+            else ["Classic inclui uma referência de VM AWS; ajuste ao provedor contratado."]
         )
         return CalculationResult(
             service_id=self.definition.id,
@@ -101,17 +137,28 @@ class DatabricksDltCalculator(BaseCalculator):
         description="Pipelines declarativos (ex-Delta Live Tables), tier Core.",
         fields=[
             FieldSchema(id="dbus", label="DBUs", type="number", unit="DBU/mês", default=150, min=0),
+            FieldSchema(
+                id="cloud_vm_hours",
+                label="VM da nuvem",
+                type="number",
+                unit="instância-hora/mês",
+                default=100,
+                min=0,
+            ),
         ],
-        pricing_references=[to_reference(p.DBX_DLT)],
+        pricing_references=[to_reference(p.DBX_DLT), to_reference(p.DBX_CLOUD_VM)],
     )
 
     def calculate(self, inputs: dict[str, float | str]) -> CalculationResult:
-        line_items = [to_line_item(p.DBX_DLT, self.get_number(inputs, "dbus"))]
+        line_items = [
+            to_line_item(p.DBX_DLT, self.get_number(inputs, "dbus")),
+            to_line_item(p.DBX_CLOUD_VM, self.get_number(inputs, "cloud_vm_hours")),
+        ]
         return CalculationResult(
             service_id=self.definition.id,
             line_items=line_items,
             total=round(sum(i.subtotal for i in line_items), 2),
-            notes=["Pro/Advanced e serverless usam outras taxas por DBU."],
+            notes=["Inclui uma referência de VM AWS. Pro/Advanced e serverless usam outras taxas por DBU."],
         )
 
 
@@ -123,7 +170,7 @@ class DatabricksStorageCalculator(BaseCalculator):
         provider="databricks",
         description="Storage gerenciado da plataforma (DSU). O lake na nuvem entra na aba GCP/Azure/AWS.",
         fields=[
-            FieldSchema(id="storage_gb", label="Dados gerenciados", type="number", unit="GB", default=200, min=0),
+            FieldSchema(id="storage_gb", label="Dados gerenciados", type="number", unit="GB", default=1000, min=0),
         ],
         pricing_references=[to_reference(p.DBX_STORAGE)],
     )

@@ -4,12 +4,13 @@ import { APP_TABS } from "../providers";
 interface Props {
   value: AppTab;
   onChange: (tab: AppTab) => void;
+  tabs?: { id: AppTab; label: string }[];
 }
 
-export function ProviderTabs({ value, onChange }: Props) {
+export function ProviderTabs({ value, onChange, tabs = APP_TABS }: Props) {
   return (
     <div className="provider-tabs" role="tablist" aria-label="Provedor de nuvem">
-      {APP_TABS.map((tab) => {
+      {tabs.map((tab) => {
         const selected = tab.id === value;
         return (
           <button

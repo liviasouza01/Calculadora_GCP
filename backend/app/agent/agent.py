@@ -16,6 +16,50 @@ from app.domain.calculators.registry import get_calculator, list_definitions
 
 MODEL_ID = "gemini-flash-latest"
 
+CLOUD_FUNCTION_MAP = """
+Quando comparar nuvens, preencha SOMENTE equivalentes da mesma função, com os MESMOS volumes.
+Use estes ids do catálogo:
+
+Função | Google | Azure | AWS | Databricks
+Object storage | storage | azure_adls | aws_s3 | dbx_storage
+Warehouse / analytics SQL | bigquery | azure_synapse_sql | aws_athena e aws_redshift | dbx_sql
+Eventos / mensageria | pubsub | azure_event_hubs | aws_kinesis | (sem equivalente; não invente)
+CDC / replicação | datastream | azure_dms | aws_dms | (sem equivalente)
+Transferência de arquivos | data_transfer | azure_storage_mover | aws_datasync | (sem equivalente)
+ETL / pipelines batch | dataflow (job_type batch) | azure_data_factory | aws_glue | dbx_jobs e dbx_dlt
+Spark / processamento | dataproc | azure_synapse_spark | aws_emr | dbx_all_purpose
+Orquestração | composer | azure_data_factory | aws_mwaa | dbx_jobs
+Streaming analytics | dataflow (job_type streaming) | azure_stream_analytics | aws_flink | dbx_jobs
+Treinamento ML | training ou automl_vision | azure_ml_training | aws_sagemaker_training | dbx_jobs
+Inferência ML | prediction | azure_ml_endpoint | aws_sagemaker_endpoint | dbx_model_serving
+Notebooks ML | vertex_workbench | azure_ml_workbench | aws_sagemaker_notebook | dbx_all_purpose
+Feature store | feature_store | (sem cobrança separada comparável) | aws_feature_store | (sem cobrança separada comparável)
+Busca vetorial | vector_search | azure_ai_search | aws_opensearch | dbx_vector_search
+Monitoramento de modelos | model_monitoring | azure_monitor | aws_cloudwatch | dbx_lakehouse_monitoring
+Análise de imagens | vision_api | azure_ai_vision | aws_rekognition_image | (sem equivalente; não invente)
+Análise de vídeo | video_intelligence | azure_ai_video | aws_rekognition_video | (sem equivalente; não invente)
+Aplicação serverless | cloud_run | azure_container_apps | aws_lambda | (sem equivalente; não invente)
+Logs e observabilidade | cloud_operations | azure_monitor | aws_cloudwatch | (sem equivalente; não invente)
+Secrets | secret_manager | azure_key_vault | aws_secrets_manager | (sem equivalente; não invente)
+CI/CD | cloud_build | azure_pipelines | aws_codebuild | (sem equivalente; não invente)
+BI e dashboards | looker | azure_power_bi | aws_quicksight | dbx_sql (dashboards incluídos no warehouse)
+
+Regras:
+- Se a proposta usa Cloud Storage, preencha também azure_adls, aws_s3 e dbx_storage com o mesmo GB.
+- dbx_storage mede o armazenamento gerenciado pelo Databricks e complementa o object storage
+  da nuvem hospedeira; mantenha o mesmo volume para tornar essa parcela explícita.
+- Se usa BigQuery, preencha azure_synapse_sql, aws_athena (e redshift se for warehouse) e dbx_sql.
+- Não reutilize aws_kinesis como processamento: ele representa mensageria; para streaming
+  analytics use aws_flink.
+- Em ETL batch, defina explicitamente dataflow.job_type como batch.
+- Para ML, visão e operação, use os equivalentes explícitos acima e preserve horas, GB,
+  número de transações, imagens, minutos e requisições sempre que as unidades permitirem.
+- Para BI, use azure_power_bi, aws_quicksight e os dashboards incluídos em dbx_sql.
+- Databricks não é uma nuvem de infraestrutura: compute clássico deve incluir DBUs e
+  cloud_vm_hours; serverless não deve adicionar VM.
+- Não misture funções (ex.: não use S3 no lugar de BigQuery).
+"""
+
 
 def list_calculator_services(provider: str = "") -> dict:
     """Lista os serviços da calculadora e os campos que cada um aceita.
@@ -165,7 +209,10 @@ Fluxo obrigatório:
    - scenario='as_is' para o que JÁ existe. Se a origem for multicloud, use ids de qualquer nuvem que aparecer no anexo.
    - scenario='to_be' para a proposta. Se o destino for multicloud, misture nuvens conforme as notas extras.
 4. Tarefas:
-   - CONTEXTO: só scenario='to_be'. Se o destino for multicloud, use as nuvens da proposta.
+   - CONTEXTO: só scenario='to_be'. Se pedirem comparação de nuvens, preencha cada função nas 4 nuvens pelos equivalentes abaixo, mesmos volumes. Senão, só a nuvem da proposta.
+
+Equivalências (ids):
+""" + CLOUD_FUNCTION_MAP + """
    - COMPARAR: as_is na origem e to_be no destino (destino pode ser uma nuvem ou multicloud).
    - COMPLEMENTAR: as_is = o anexo; to_be = anexo + gaps. Destino pode ser a mesma nuvem ou multicloud.
 5. Responda em português com AS IS vs TO-BE e as premissas.

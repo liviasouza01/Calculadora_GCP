@@ -42,7 +42,7 @@ class AzureSynapseCalculator(BaseCalculator):
                 label="Dados processados",
                 type="number",
                 unit="TB/mês",
-                default=2,
+                default=5,
                 min=0,
             ),
         ],
@@ -140,6 +140,60 @@ class AzureDataFactoryCalculator(BaseCalculator):
             line_items=line_items,
             total=round(sum(i.subtotal for i in line_items), 2),
             notes=["Data Flows (Spark) e Self-hosted IR são cobrados à parte."],
+        )
+
+
+class AzureDmsCalculator(BaseCalculator):
+    definition = ServiceDefinition(
+        id="azure_dms",
+        name="Azure Database Migration Service",
+        category="Ingestão e Streaming",
+        provider="azure",
+        description="Migração online e replicação contínua com o tier Premium de 4 vCore.",
+        fields=[
+            FieldSchema(
+                id="billable_hours",
+                label="Horas faturáveis após período gratuito",
+                type="number",
+                unit="serviço-hora/mês",
+                default=0,
+                min=0,
+                help="O Premium de 4 vCore é gratuito nos primeiros 183 dias.",
+            ),
+        ],
+        pricing_references=[to_reference(p.AZURE_DMS_PREMIUM)],
+    )
+
+    def calculate(self, inputs: dict[str, float | str]) -> CalculationResult:
+        line_items = [to_line_item(p.AZURE_DMS_PREMIUM, self.get_number(inputs, "billable_hours"))]
+        return CalculationResult(
+            service_id=self.definition.id,
+            line_items=line_items,
+            total=round(sum(i.subtotal for i in line_items), 2),
+            notes=["A tarifa é regional; destino, storage e rede são cobrados separadamente."],
+        )
+
+
+class AzureStorageMoverCalculator(BaseCalculator):
+    definition = ServiceDefinition(
+        id="azure_storage_mover",
+        name="Azure Storage Mover",
+        category="Transferência",
+        provider="azure",
+        description="Migração e sincronização gerenciada de arquivos e objetos para o Azure.",
+        fields=[
+            FieldSchema(id="copied_gb", label="Dados copiados", type="number", unit="GB/mês", default=0, min=0),
+        ],
+        pricing_references=[to_reference(p.AZURE_STORAGE_MOVER)],
+    )
+
+    def calculate(self, inputs: dict[str, float | str]) -> CalculationResult:
+        line_items = [to_line_item(p.AZURE_STORAGE_MOVER, self.get_number(inputs, "copied_gb"))]
+        return CalculationResult(
+            service_id=self.definition.id,
+            line_items=line_items,
+            total=round(sum(i.subtotal for i in line_items), 2),
+            notes=["Storage Mover é gratuito; use ADLS para storage e considere rede/transações à parte."],
         )
 
 

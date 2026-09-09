@@ -7,7 +7,7 @@ import type {
   ServiceDefinition,
   ServiceInputs,
 } from "./types";
-import { fetchServices } from "./api/client";
+import { calculateProject, createShare, fetchServices, fetchShare } from "./api/client";
 import { ComparePanel } from "./components/ComparePanel";
 import { CompareSummary } from "./components/CompareSummary";
 import { HomeChat } from "./components/HomeChat";
@@ -15,7 +15,9 @@ import type { ChatMessage } from "./components/HomeChat";
 import { ProviderTabs } from "./components/ProviderTabs";
 import { ServicePanel } from "./components/ServicePanel";
 import { ProjectSummary } from "./components/ProjectSummary";
-import { APP_TITLE, COMPARE_SCOPES, PROVIDER_COPY, PROVIDERS } from "./providers";
+import { APP_TITLE, CLIENT_TABS, COMPARE_SCOPES, PROVIDER_COPY, PROVIDERS } from "./providers";
+import type { AppFlags } from "./flags";
+import { currentShareId, magicLink } from "./shareUrl";
 import "./App.css";
 
 function groupByCategory(services: ServiceDefinition[]) {
@@ -55,7 +57,7 @@ function enabledMap(filled: Record<string, ServiceInputs>): Record<string, boole
   return Object.fromEntries(Object.keys(filled).map((id) => [id, true]));
 }
 
-export default function App() {
+export default function App({ flags }: { flags: AppFlags }) {
   const [services, setServices] = useState<ServiceDefinition[] | null>(null);
   const [tab, setTab] = useState<AppTab>("home");
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
@@ -73,7 +75,25 @@ export default function App() {
   const [compareTarget, setCompareTarget] = useState<CompareScope | null>(null);
   const [asIsEnabled, setAsIsEnabled] = useState<Record<string, boolean>>({});
   const [toBeEnabled, setToBeEnabled] = useState<Record<string, boolean>>({});
+  const [sessionKey, setSessionKey] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [shareBusy, setShareBusy] = useState(false);
+  const shareId = currentShareId();
+  const clientView = Boolean(shareId) || flags.clientCalculatorOnly;
+
+  function calculateFilled(filled: Record<string, ServiceInputs>) {
+    const items = Object.entries(filled).map(([service_id, inputs]) => ({ service_id, inputs }));
+    if (items.length === 0) {
+      setResults({});
+      return;
+    }
+    calculateProject(items)
+      .then((project) =>
+        setResults(Object.fromEntries(project.results.map((result) => [result.service_id, result]))),
+      )
+      .catch(() => setResults({}));
+  }
 
   useEffect(() => {
     fetchServices()
@@ -81,11 +101,76 @@ export default function App() {
       .catch(() => setError("Não foi possível conectar à API. Verifique se o backend está rodando."));
   }, []);
 
+  useEffect(() => {
+    if (!shareId || !services) {
+      return;
+    }
+    let cancelled = false;
+    fetchShare(shareId)
+      .then((share) => {
+        if (cancelled) {
+          return;
+        }
+        setEnabled(share.enabled);
+        setPresets(share.presets);
+        calculateFilled(
+          Object.fromEntries(
+            Object.entries(share.presets).filter(([serviceId]) => share.enabled[serviceId]),
+          ),
+        );
+        const match = services.find((service) => share.enabled[service.id]);
+        setTab(match ? serviceProvider(match) : "gcp");
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setError("Este link mágico não é válido ou expirou.");
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [shareId, services]);
+
   function applyProposal(filled: Record<string, ServiceInputs>, image: string | null) {
     setPresets(filled);
     setEnabled(enabledMap(filled));
-    setResults({});
+    calculateFilled(filled);
     setArchitectureImage(image);
+  }
+
+  function clearSession() {
+    setChatMessages([]);
+    setChatBusy(false);
+    setChatError(null);
+    setArchitectureImage(null);
+    setEnabled({});
+    setPresets({});
+    setResults({});
+    setAsIsInputs({});
+    setToBeInputs({});
+    setAsIsResults({});
+    setToBeResults({});
+    setAsIsEnabled({});
+    setToBeEnabled({});
+    setCompareSource("gcp");
+    setCompareTarget(null);
+    setSessionKey((value) => value + 1);
+    setTab("home");
+  }
+
+  async function shareWithClient() {
+    setShareBusy(true);
+    setShareUrl(null);
+    try {
+      const created = await createShare({ enabled, presets });
+      const url = magicLink(created.id);
+      await navigator.clipboard.writeText(url);
+      setShareUrl(url);
+    } catch (err) {
+      setShareUrl(err instanceof Error ? err.message : "Não foi possível gerar o link.");
+    } finally {
+      setShareBusy(false);
+    }
   }
 
   if (error) {
@@ -96,13 +181,21 @@ export default function App() {
     return <div className="app-loading">Carregando componentes...</div>;
   }
 
-  const compareMode = tab === "compare";
-  const homeMode = tab === "home";
+  const compareMode = !clientView && tab === "compare";
+  const homeMode = !clientView && tab === "home";
   const provider: CloudProvider = isCloudTab(tab) ? tab : "gcp";
   const copy = PROVIDER_COPY[provider];
   const visible = compareMode
     ? []
-    : services.filter((service) => serviceProvider(service) === provider);
+    : services.filter((service) => {
+        if (serviceProvider(service) !== provider) {
+          return false;
+        }
+        if (clientView) {
+          return Boolean(enabled[service.id] || presets[service.id]);
+        }
+        return true;
+      });
   const grouped = groupByCategory(visible);
   const visibleIds = new Set(visible.map((service) => service.id));
   const visibleResults = Object.fromEntries(
@@ -120,6 +213,24 @@ export default function App() {
   const hasCompare = compareTarget !== null && (asIsServices.length > 0 || toBeServices.length > 0);
   const filledProviders = PROVIDERS.map((item) => item.id).filter((id) =>
     services.some((service) => Boolean(enabled[service.id]) && serviceProvider(service) === id),
+  );
+  const cloudTotals = PROVIDERS.map((item) => ({
+    id: item.id,
+    label: item.label,
+    total: services
+      .filter((service) => serviceProvider(service) === item.id && enabled[service.id] && results[service.id])
+      .reduce((sum, service) => sum + (results[service.id]?.total ?? 0), 0),
+  })).filter((item) => item.total > 0);
+  const reportServices = services.filter(
+    (service) => enabled[service.id] && results[service.id],
+  );
+  const reportResults = reportServices
+    .map((service) => results[service.id])
+    .filter((result): result is CalculationResult => result !== null);
+  const hasCalculator = Object.values(enabled).some(Boolean);
+  const canShare = flags.shareCalculator && hasCalculator && !clientView;
+  const clientTabs = CLIENT_TABS.filter((item) =>
+    filledProviders.includes(item.id as CloudProvider),
   );
 
   function renderGroup(title: string, list: ServiceDefinition[], scenario: "as_is" | "to_be") {
@@ -179,14 +290,34 @@ export default function App() {
     <div className="app">
       <header className="app__header">
         <div className="app__header-inner">
-          {homeMode ? null : <h1>{APP_TITLE}</h1>}
-          <ProviderTabs value={tab} onChange={setTab} />
+          {homeMode && !clientView ? null : <h1>{APP_TITLE}</h1>}
+          <div className="app__header-row">
+            <ProviderTabs
+              value={isCloudTab(tab) ? tab : clientView ? (clientTabs[0]?.id ?? "gcp") : tab}
+              onChange={setTab}
+              tabs={clientView ? clientTabs : undefined}
+            />
+            <div className="app__header-actions">
+              {canShare ? (
+                <button type="button" className="app__clear" onClick={() => void shareWithClient()} disabled={shareBusy}>
+                  {shareBusy ? "Gerando link..." : "Link mágico"}
+                </button>
+              ) : null}
+              {clientView ? null : (
+                <button type="button" className="app__clear" onClick={clearSession}>
+                  Limpar
+                </button>
+              )}
+            </div>
+          </div>
+          {shareUrl && !clientView ? <p className="app__share-url">{shareUrl}</p> : null}
         </div>
       </header>
 
       <div className={homeMode ? "app__home-wrap" : "app__content"}>
         {homeMode ? (
           <HomeChat
+            key={sessionKey}
             messages={chatMessages}
             busy={chatBusy}
             error={chatError}
@@ -195,13 +326,14 @@ export default function App() {
             onMessages={setChatMessages}
             onBusy={setChatBusy}
             onError={setChatError}
-            onComplete={(filled, _summary, image) => applyProposal(filled, image)}
+            onComplete={(filled, image) => applyProposal(filled, image)}
           />
         ) : (
           <>
         <main className="app__services">
           <div hidden={!compareMode}>
             <ComparePanel
+              key={sessionKey}
               onFilled={(asIs, toBe, source, target) => {
                 setCompareSource(source);
                 setCompareTarget(target);
@@ -227,7 +359,7 @@ export default function App() {
           ) : null}
           {isCloudTab(tab) ? (
             <>
-              {architectureImage ? (
+              {architectureImage && !clientView ? (
                 <img
                   className="architecture-preview"
                   src={
@@ -288,6 +420,9 @@ export default function App() {
             disclaimer={copy.disclaimer}
             pdfTitle={copy.pdfTitle}
             stepLabel="2"
+            cloudTotals={cloudTotals.length > 1 ? cloudTotals : undefined}
+            reportServices={reportServices}
+            reportResults={reportResults}
           />
         )}
           </>
