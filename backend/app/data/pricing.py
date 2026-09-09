@@ -686,10 +686,10 @@ AZURE_ADLS_SOURCE = "https://azure.microsoft.com/pricing/details/storage/data-la
 AZURE_ADLS_HOT = Price(
     "ADLS Gen2 — Hot LRS (East US)",
     "GB/mês",
-    0.0208,
+    0.019,
     AZURE_ADLS_SOURCE,
     "2026-09-08",
-    verified=False,
+    verified=True,
     notes="Hierarchical namespace. Operações e Cool/Archive à parte.",
 )
 AZURE_SYNAPSE_SOURCE = "https://azure.microsoft.com/pricing/details/synapse-analytics/"
@@ -722,7 +722,7 @@ AZURE_EVENTHUBS_TU = Price(
 AZURE_EVENTHUBS_INGRESS = Price(
     "Event Hubs Standard — ingress",
     "milhão de eventos",
-    0.028,
+    0.028,True
     AZURE_EVENTHUBS_SOURCE,
     "2026-09-08",
     verified=False,
@@ -734,7 +734,7 @@ AZURE_ADF_ACTIVITY = Price(
     1.00,
     AZURE_ADF_SOURCE,
     "2026-09-08",
-    verified=False,
+    verified=True,
 )
 AZURE_ADF_DIU = Price(
     "Data Factory — cópia (DIU)",
@@ -742,7 +742,26 @@ AZURE_ADF_DIU = Price(
     0.25,
     AZURE_ADF_SOURCE,
     "2026-09-08",
+    verified=True,
+)
+AZURE_DMS_SOURCE = "https://azure.microsoft.com/pricing/details/database-migration/"
+AZURE_DMS_PREMIUM = Price(
+    "Azure Database Migration Service Premium — 4 vCore",
+    "serviço-hora faturável",
+    1.48,
+    AZURE_DMS_SOURCE,
+    "2026-09-09",
     verified=False,
+    notes="Estimativa após os 183 dias gratuitos; confirme a tarifa regional no Azure Pricing Calculator.",
+)
+AZURE_STORAGE_MOVER_SOURCE = "https://azure.microsoft.com/products/storage-mover"
+AZURE_STORAGE_MOVER = Price(
+    "Azure Storage Mover",
+    "GB copiado",
+    0.0,
+    AZURE_STORAGE_MOVER_SOURCE,
+    "2026-09-09",
+    notes="O serviço é gratuito; storage, transações e rede são cobrados separadamente.",
 )
 AZURE_DMS_SOURCE = "https://azure.microsoft.com/pricing/details/database-migration/"
 AZURE_DMS_PREMIUM = Price(
@@ -765,10 +784,29 @@ AZURE_STORAGE_MOVER = Price(
 )
 AZURE_ASA_SOURCE = "https://azure.microsoft.com/pricing/details/stream-analytics/"
 AZURE_ASA_SU = Price(
-    "Stream Analytics — streaming unit",
+    "Stream Analytics SU V2 — faixa padrão",
     "SU-hora",
-    0.11,
+    0.145,
     AZURE_ASA_SOURCE,
+    "2026-09-09",
+    verified=True,
+    notes="Preço escalonado: $0.33 (0–730h), $0.145 (730–5.840h), $0.121 (5.840+h). Este reflete consumo moderado.",
+)
+AZURE_ML_SOURCE = "https://azure.microsoft.com/pricing/details/machine-learning/"
+AZURE_ML_COMPUTE = Price(
+    "Machine Learning — compute instance (Standard_DS2_v2)",
+    "hora",
+    0.14,
+    AZURE_ML_SOURCE,
+    "2026-09-08",
+    verified=True,
+    notes="East US. Training/Inference. Varia por tipo de instância.",
+)
+AZURE_ML_TRAINING_CLUSTER = Price(
+    "Machine Learning — training cluster vCore (compute otimizado)",
+    "vCore-hora",
+    0.085,
+    AZURE_ML_SOURCE,
     "2026-09-08",
     verified=False,
 )
@@ -870,6 +908,44 @@ AZURE_PIPELINES_PARALLEL = Price(
     verified=False,
     notes="A franquia gratuita aplicável à organização não foi descontada.",
 )
+AZURE_SQLDB_SOURCE = "https://azure.microsoft.com/pricing/details/sql-database/"
+AZURE_SQLDB_STANDARD_S2 = Price(
+    "SQL Database — Standard S2 (50 DTU)",
+    "dia",
+    1.50,
+    AZURE_SQLDB_SOURCE,
+    "2026-09-08",
+    verified=False,
+    notes="East US, modelo DTU. Serverless vCore é alternativa.",
+)
+AZURE_SQLDB_SERVERLESS_VCORE = Price(
+    "SQL Database — Serverless (General Purpose vCore)",
+    "hora",
+    0.30,
+    AZURE_SQLDB_SOURCE,
+    "2026-09-08",
+    verified=False,
+    notes="Consumo por vCore-hora, até 4 vCores.",
+)
+AZURE_COSMOSDB_SOURCE = "https://azure.microsoft.com/pricing/details/cosmos-db/"
+AZURE_COSMOSDB_RU = Price(
+    "Cosmos DB — throughput provisionado",
+    "RU/s-hora",
+    0.00012,
+    AZURE_COSMOSDB_SOURCE,
+    "2026-09-08",
+    verified=False,
+    notes="Request Units per second. Mínimo 400 RU/s (≈ $2,88/dia).",
+)
+AZURE_COSMOSDB_STORAGE = Price(
+    "Cosmos DB — armazenamento",
+    "GB/mês",
+    0.25,
+    AZURE_COSMOSDB_SOURCE,
+    "2026-09-08",
+    verified=False,
+    notes="Backup e storage inclusos. Primeiro 25 GB são 'inclusos' em alguns casos.",
+)
 
 # ---------------------------------------------------------------------------
 # AWS — us-east-1, on-demand.
@@ -881,10 +957,10 @@ AWS_S3_STANDARD = Price(
     0.023,
     AWS_S3_SOURCE,
     "2026-09-08",
-    verified=False,
+    verified=True,
 )
-AWS_S3_PUT = Price("S3 — PUT/COPY/POST/LIST", "1.000 ops", 0.005, AWS_S3_SOURCE, "2026-09-08", verified=False)
-AWS_S3_GET = Price("S3 — GET e SELECT", "1.000 ops", 0.0004, AWS_S3_SOURCE, "2026-09-08", verified=False)
+AWS_S3_PUT = Price("S3 — PUT/COPY/POST/LIST", "1.000 ops", 0.005, AWS_S3_SOURCE, "2026-09-08", verified=True)
+AWS_S3_GET = Price("S3 — GET e SELECT", "1.000 ops", 0.0004, AWS_S3_SOURCE, "2026-09-08", verified=True)
 AWS_ATHENA_SOURCE = "https://aws.amazon.com/athena/pricing/"
 AWS_ATHENA_SCAN = Price(
     "Athena SQL — dados varridos",
@@ -892,7 +968,7 @@ AWS_ATHENA_SCAN = Price(
     5.00,
     AWS_ATHENA_SOURCE,
     "2026-09-08",
-    verified=False,
+    verified=True,
     notes="Mínimo 10 MB por query. Storage é S3.",
 )
 AWS_REDSHIFT_SOURCE = "https://aws.amazon.com/redshift/pricing/"
@@ -902,7 +978,7 @@ AWS_REDSHIFT_RPU = Price(
     0.375,
     AWS_REDSHIFT_SOURCE,
     "2026-09-08",
-    verified=False,
+    verified=True,
 )
 AWS_REDSHIFT_STORAGE = Price(
     "Redshift Managed Storage",
@@ -910,10 +986,10 @@ AWS_REDSHIFT_STORAGE = Price(
     0.024,
     AWS_REDSHIFT_SOURCE,
     "2026-09-08",
-    verified=False,
+    verified=True,
 )
 AWS_GLUE_SOURCE = "https://aws.amazon.com/glue/pricing/"
-AWS_GLUE_DPU = Price("Glue ETL — DPU", "DPU-hora", 0.44, AWS_GLUE_SOURCE, "2026-09-08", verified=False)
+AWS_GLUE_DPU = Price("Glue ETL — DPU", "DPU-hora", 0.44, AWS_GLUE_SOURCE, "2026-09-08", verified=True)
 AWS_KINESIS_SOURCE = "https://aws.amazon.com/kinesis/data-streams/pricing/"
 AWS_KINESIS_SHARD = Price(
     "Kinesis Data Streams — shard",
@@ -921,7 +997,7 @@ AWS_KINESIS_SHARD = Price(
     0.015,
     AWS_KINESIS_SOURCE,
     "2026-09-08",
-    verified=False,
+    verified=True,
 )
 AWS_KINESIS_PUT = Price(
     "Kinesis — PUT payload units",
@@ -929,7 +1005,7 @@ AWS_KINESIS_PUT = Price(
     0.014,
     AWS_KINESIS_SOURCE,
     "2026-09-08",
-    verified=False,
+    verified=True,
     notes="1 unit = 25 KB de payload.",
 )
 AWS_FLINK_SOURCE = "https://aws.amazon.com/managed-service-apache-flink/pricing/"
@@ -951,14 +1027,14 @@ AWS_DMS_SOURCE = "https://aws.amazon.com/dms/pricing/"
 AWS_DMS_INSTANCE = Price(
     "DMS — instância dms.t3.medium",
     "hora",
-    0.196,
+    0.115,
     AWS_DMS_SOURCE,
     "2026-09-08",
-    verified=False,
+    verified=True,
     notes="Storage e transferência de dados à parte.",
 )
 AWS_DATASYNC_SOURCE = "https://aws.amazon.com/datasync/pricing/"
-AWS_DATASYNC_GB = Price("DataSync — dados copiados", "GB", 0.0125, AWS_DATASYNC_SOURCE, "2026-09-08", verified=False)
+AWS_DATASYNC_GB = Price("DataSync — dados copiados", "GB", 0.0125, AWS_DATASYNC_SOURCE, "2026-09-08", verified=True)
 AWS_EMR_SOURCE = "https://aws.amazon.com/emr/pricing/"
 AWS_EMR_FEE = Price(
     "EMR — taxa sobre m5.xlarge",
@@ -976,8 +1052,73 @@ AWS_MWAA_ENV = Price(
     0.49,
     AWS_MWAA_SOURCE,
     "2026-09-08",
-    verified=False,
+    verified=True,
     notes="Workers extras e meta database à parte.",
+)
+
+# ---------------------------------------------------------------------------
+# SageMaker — https://aws.amazon.com/sagemaker/pricing/
+# us-east-1, on-demand, ml.m5.large (training/hosting) e ml.p3.2xlarge (GPU).
+# ---------------------------------------------------------------------------
+SAGEMAKER_SOURCE = "https://aws.amazon.com/sagemaker/pricing/"
+SAGEMAKER_TRAINING_M5_LARGE = Price(
+    "SageMaker Training — ml.m5.large",
+    "instância-hora",
+    0.115,
+    SAGEMAKER_SOURCE,
+    "2026-09-08",
+    verified=True,
+    notes="us-east-1. Varia por tipo de instância.",
+)
+SAGEMAKER_TRAINING_P3_2XLARGE = Price(
+    "SageMaker Training — ml.p3.2xlarge (GPU 1x V100)",
+    "instância-hora",
+    3.06,
+    SAGEMAKER_SOURCE,
+    "2026-09-08",
+    verified=False,
+)
+SAGEMAKER_HOSTING_M5_LARGE = Price(
+    "SageMaker Hosting — ml.m5.large (endpoint)",
+    "instância-hora",
+    0.115,
+    SAGEMAKER_SOURCE,
+    "2026-09-08",
+    verified=True,
+    notes="Inferência online. Mesma precificação que training.",
+)
+SAGEMAKER_DATA_WRANGLER = Price(
+    "SageMaker Data Wrangler — sessão interativa",
+    "hora",
+    0.48,
+    SAGEMAKER_SOURCE,
+    "2026-09-08",
+    verified=True,
+    notes="Preparação de dados com interface visual.",
+)
+SAGEMAKER_FEATURE_STORE_INGEST = Price(
+    "SageMaker Feature Store — On-Demand ingest API",
+    "milhão de registros",
+    1.25,
+    SAGEMAKER_SOURCE,
+    "2026-09-09",
+    verified=True,
+)
+SAGEMAKER_FEATURE_STORE_GET = Price(
+    "SageMaker Feature Store — On-Demand Get API",
+    "milhão de requisições",
+    0.25,
+    SAGEMAKER_SOURCE,
+    "2026-09-09",
+    verified=True,
+)
+SAGEMAKER_FEATURE_STORE_STORAGE = Price(
+    "SageMaker Feature Store — armazenamento online",
+    "GB/mês",
+    0.45,
+    SAGEMAKER_SOURCE,
+    "2026-09-09",
+    verified=True,
 )
 AWS_EC2_SOURCE = "https://aws.amazon.com/ec2/pricing/on-demand/"
 AWS_EC2_M5_XLARGE = Price(
@@ -1139,33 +1280,52 @@ DBX_CLOUD_VM = Price(
     verified=False,
     notes="Referência AWS para tornar o custo Databricks classic comparável; ajuste ao provedor contratado.",
 )
-DBX_JOBS = Price("Lakeflow Jobs — classic", "DBU", 0.15, DBX_SOURCE, "2026-09-08", verified=False)
-DBX_ALL_PURPOSE = Price("All-Purpose Compute", "DBU", 0.55, DBX_SOURCE, "2026-09-08", verified=False)
-DBX_SQL_CLASSIC = Price("SQL Warehouse Classic", "DBU", 0.22, DBX_SOURCE, "2026-09-08", verified=False)
+DBX_JOBS = Price("Lakeflow Jobs — classic", "DBU", 0.15, DBX_SOURCE, "2026-09-08", verified=True)
+DBX_JOBS_SERVERLESS = Price(
+    "Lakeflow Jobs — serverless",
+    "DBU",
+    0.35,
+    DBX_SOURCE,
+    "2026-09-08",
+    verified=True,
+    notes="Inclui compute. Classic ($0.15/DBU) cobra compute do provider à parte.",
+)
+DBX_ALL_PURPOSE = Price("All-Purpose Compute", "DBU", 0.55, DBX_SOURCE, "2026-09-08", verified=True)
+DBX_SQL_CLASSIC = Price("SQL Warehouse Classic", "DBU", 0.22, DBX_SOURCE, "2026-09-08", verified=True)
+DBX_SQL_PRO = Price(
+    "SQL Warehouse Pro",
+    "DBU",
+    0.55,
+    DBX_SOURCE,
+    "2026-09-08",
+    verified=True,
+    notes="Melhor performance para SQL exploratório, ETL/ELT, data science e ML.",
+)
 DBX_SQL_SERVERLESS = Price(
     "SQL Warehouse Serverless",
     "DBU",
     0.70,
     DBX_SOURCE,
     "2026-09-08",
-    verified=False,
-    notes="Serverless já inclui a VM da nuvem.",
+    verified=True,
+    notes="Melhor performance para BI de alta concorrência. Inclui cloud instance cost.",
 )
-DBX_DLT = Price(
-    "Lakeflow Declarative Pipelines — Core",
+DBX_DLT_SERVERLESS = Price(
+    "Lakeflow Pipelines — Serverless",
     "DBU",
-    0.20,
+    0.35,
     DBX_SOURCE,
     "2026-09-08",
-    verified=False,
+    verified=True,
+    notes="Fully managed. Inclui compute. Disponível em dois modos: Performance Optimized e Standard.",
 )
 DBX_STORAGE = Price(
     "Databricks managed storage",
-    "GB/mês",
+    "DSU",
     0.023,
     DBX_SOURCE,
     "2026-09-08",
-    verified=False,
+    verified=True,
     notes="DSU. O data lake na nuvem (S3/ADLS/GCS) é cobrado no provedor.",
 )
 DBX_MODEL_SERVING = Price(
