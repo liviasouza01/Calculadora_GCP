@@ -722,7 +722,7 @@ AZURE_EVENTHUBS_TU = Price(
 AZURE_EVENTHUBS_INGRESS = Price(
     "Event Hubs Standard — ingress",
     "milhão de eventos",
-    0.028,True
+    0.028,
     AZURE_EVENTHUBS_SOURCE,
     "2026-09-08",
     verified=False,
