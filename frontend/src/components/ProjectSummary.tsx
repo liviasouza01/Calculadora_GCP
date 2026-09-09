@@ -1,4 +1,4 @@
-import type { CalculationResult, ServiceDefinition } from "../types";
+import type { CalculationResult, CloudProvider, ServiceDefinition } from "../types";
 import { downloadProjectReport } from "../export/reportPdf";
 import { money } from "../format";
 
@@ -8,14 +8,28 @@ interface Props {
   disclaimer: string;
   pdfTitle: string;
   stepLabel: string;
+  cloudTotals?: { id: CloudProvider; label: string; total: number }[];
+  reportServices?: ServiceDefinition[];
+  reportResults?: CalculationResult[];
 }
 
-export function ProjectSummary({ services, results, disclaimer, pdfTitle, stepLabel }: Props) {
+export function ProjectSummary({
+  services,
+  results,
+  disclaimer,
+  pdfTitle,
+  stepLabel,
+  cloudTotals,
+  reportServices,
+  reportResults,
+}: Props) {
   const names = new Map(services.map((service) => [service.id, service.name]));
   const active = Object.values(results).filter(
     (result): result is CalculationResult => result !== null,
   );
   const grandTotal = active.reduce((sum, result) => sum + result.total, 0);
+  const exportServices = reportServices ?? services;
+  const exportResults = reportResults ?? active;
 
   return (
     <aside className="project-summary">
@@ -44,14 +58,27 @@ export function ProjectSummary({ services, results, disclaimer, pdfTitle, stepLa
         <span>Total / mês</span>
         <strong>{money.format(grandTotal)}</strong>
       </div>
+      {cloudTotals && cloudTotals.length > 1 ? (
+        <div className="cloud-compare">
+          <h3>Comparação de nuvens</h3>
+          <ul>
+            {cloudTotals.map((item) => (
+              <li key={item.id}>
+                <span>{item.label}</span>
+                <span>{money.format(item.total)}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
       <button
         type="button"
         className="project-summary__export"
         disabled={active.length === 0}
         onClick={() =>
           downloadProjectReport({
-            services,
-            results: active,
+            services: exportServices,
+            results: exportResults,
             title: pdfTitle,
             disclaimer,
           })

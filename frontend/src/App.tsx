@@ -7,7 +7,7 @@ import type {
   ServiceDefinition,
   ServiceInputs,
 } from "./types";
-import { fetchServices, createShare, fetchShare } from "./api/client";
+import { calculateProject, createShare, fetchServices, fetchShare } from "./api/client";
 import { ComparePanel } from "./components/ComparePanel";
 import { CompareSummary } from "./components/CompareSummary";
 import { HomeChat } from "./components/HomeChat";
@@ -82,6 +82,19 @@ export default function App({ flags }: { flags: AppFlags }) {
   const shareId = currentShareId();
   const clientView = Boolean(shareId) || flags.clientCalculatorOnly;
 
+  function calculateFilled(filled: Record<string, ServiceInputs>) {
+    const items = Object.entries(filled).map(([service_id, inputs]) => ({ service_id, inputs }));
+    if (items.length === 0) {
+      setResults({});
+      return;
+    }
+    calculateProject(items)
+      .then((project) =>
+        setResults(Object.fromEntries(project.results.map((result) => [result.service_id, result]))),
+      )
+      .catch(() => setResults({}));
+  }
+
   useEffect(() => {
     fetchServices()
       .then(setServices)
@@ -100,7 +113,11 @@ export default function App({ flags }: { flags: AppFlags }) {
         }
         setEnabled(share.enabled);
         setPresets(share.presets);
-        setResults({});
+        calculateFilled(
+          Object.fromEntries(
+            Object.entries(share.presets).filter(([serviceId]) => share.enabled[serviceId]),
+          ),
+        );
         const match = services.find((service) => share.enabled[service.id]);
         setTab(match ? serviceProvider(match) : "gcp");
       })
@@ -117,7 +134,7 @@ export default function App({ flags }: { flags: AppFlags }) {
   function applyProposal(filled: Record<string, ServiceInputs>, image: string | null) {
     setPresets(filled);
     setEnabled(enabledMap(filled));
-    setResults({});
+    calculateFilled(filled);
     setArchitectureImage(image);
   }
 
@@ -197,6 +214,19 @@ export default function App({ flags }: { flags: AppFlags }) {
   const filledProviders = PROVIDERS.map((item) => item.id).filter((id) =>
     services.some((service) => Boolean(enabled[service.id]) && serviceProvider(service) === id),
   );
+  const cloudTotals = PROVIDERS.map((item) => ({
+    id: item.id,
+    label: item.label,
+    total: services
+      .filter((service) => serviceProvider(service) === item.id && enabled[service.id] && results[service.id])
+      .reduce((sum, service) => sum + (results[service.id]?.total ?? 0), 0),
+  })).filter((item) => item.total > 0);
+  const reportServices = services.filter(
+    (service) => enabled[service.id] && results[service.id],
+  );
+  const reportResults = reportServices
+    .map((service) => results[service.id])
+    .filter((result): result is CalculationResult => result !== null);
   const hasCalculator = Object.values(enabled).some(Boolean);
   const canShare = flags.shareCalculator && hasCalculator && !clientView;
   const clientTabs = CLIENT_TABS.filter((item) =>
@@ -390,6 +420,9 @@ export default function App({ flags }: { flags: AppFlags }) {
             disclaimer={copy.disclaimer}
             pdfTitle={copy.pdfTitle}
             stepLabel="2"
+            cloudTotals={cloudTotals.length > 1 ? cloudTotals : undefined}
+            reportServices={reportServices}
+            reportResults={reportResults}
           />
         )}
           </>
