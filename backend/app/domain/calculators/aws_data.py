@@ -61,7 +61,7 @@ class AwsAthenaCalculator(BaseCalculator):
         provider="aws",
         description="SQL serverless sobre o S3 (TB varrido).",
         fields=[
-            FieldSchema(id="scanned_tb", label="Dados varridos", type="number", unit="TB/mês", default=2, min=0),
+            FieldSchema(id="scanned_tb", label="Dados varridos", type="number", unit="TB/mês", default=5, min=0),
         ],
         pricing_references=[to_reference(p.AWS_ATHENA_SCAN)],
     )
@@ -176,6 +176,48 @@ class AwsKinesisCalculator(BaseCalculator):
         )
 
 
+class AwsFlinkCalculator(BaseCalculator):
+    definition = ServiceDefinition(
+        id="aws_flink",
+        name="Amazon Managed Service for Apache Flink",
+        category="Ingestão e Streaming",
+        provider="aws",
+        description="Processamento e transformação de streams; separado do barramento Kinesis Data Streams.",
+        fields=[
+            FieldSchema(
+                id="kpu_hours",
+                label="KPU-horas",
+                type="number",
+                unit="KPU-hora/mês",
+                default=1460,
+                min=0,
+                help="Inclua a KPU adicional usada pela aplicação.",
+            ),
+            FieldSchema(
+                id="application_storage_gb",
+                label="Storage da aplicação",
+                type="number",
+                unit="GB/mês",
+                default=100,
+                min=0,
+            ),
+        ],
+        pricing_references=[to_reference(p.AWS_FLINK_KPU), to_reference(p.AWS_FLINK_STORAGE)],
+    )
+
+    def calculate(self, inputs: dict[str, float | str]) -> CalculationResult:
+        line_items = [
+            to_line_item(p.AWS_FLINK_KPU, self.get_number(inputs, "kpu_hours")),
+            to_line_item(p.AWS_FLINK_STORAGE, self.get_number(inputs, "application_storage_gb")),
+        ]
+        return CalculationResult(
+            service_id=self.definition.id,
+            line_items=line_items,
+            total=round(sum(i.subtotal for i in line_items), 2),
+            notes=["Kinesis Data Streams, S3 e backups duráveis são cobrados separadamente."],
+        )
+
+
 class AwsDmsCalculator(BaseCalculator):
     definition = ServiceDefinition(
         id="aws_dms",
@@ -228,7 +270,7 @@ class AwsEmrCalculator(BaseCalculator):
         name="Amazon EMR",
         category="Processamento e Analytics",
         provider="aws",
-        description="Spark/Hadoop gerenciado — só a taxa EMR (EC2 à parte).",
+        description="Spark/Hadoop gerenciado — taxa EMR + instâncias EC2.",
         fields=[
             FieldSchema(
                 id="instance_hours",
@@ -240,16 +282,20 @@ class AwsEmrCalculator(BaseCalculator):
                 help="Ex.: 2 nós × 730 h.",
             ),
         ],
-        pricing_references=[to_reference(p.AWS_EMR_FEE)],
+        pricing_references=[to_reference(p.AWS_EMR_FEE), to_reference(p.AWS_EC2_M5_XLARGE)],
     )
 
     def calculate(self, inputs: dict[str, float | str]) -> CalculationResult:
-        line_items = [to_line_item(p.AWS_EMR_FEE, self.get_number(inputs, "instance_hours"))]
+        instance_hours = self.get_number(inputs, "instance_hours")
+        line_items = [
+            to_line_item(p.AWS_EMR_FEE, instance_hours),
+            to_line_item(p.AWS_EC2_M5_XLARGE, instance_hours),
+        ]
         return CalculationResult(
             service_id=self.definition.id,
             line_items=line_items,
             total=round(sum(i.subtotal for i in line_items), 2),
-            notes=["Some o EC2/EBS na conta AWS. EMR Serverless usa DPU."],
+            notes=["EBS e transferência permanecem à parte. EMR Serverless usa DPU."],
         )
 
 

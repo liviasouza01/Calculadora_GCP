@@ -46,6 +46,7 @@ export function HomeChat({
   const [text, setText] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const [wantArchitecture, setWantArchitecture] = useState(true);
+  const [wantCloudCompare, setWantCloudCompare] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   function handleKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
@@ -82,6 +83,7 @@ export function HomeChat({
     data.append("source_provider", "multicloud");
     data.append("target_provider", "multicloud");
     data.append("want_architecture", wantArchitecture ? "true" : "false");
+    data.append("want_cloud_compare", wantCloudCompare ? "true" : "false");
 
     try {
       const result = await fillFromBriefing(data);
@@ -202,9 +204,17 @@ export function HomeChat({
             type="button"
             className={wantArchitecture ? "home-composer__tool home-composer__tool--on" : "home-composer__tool"}
             onClick={() => setWantArchitecture((value) => !value)}
-            title="Ligado: gera o diagrama da arquitetura. Desligado: só preenche a calculadora."
+            title="Ligado: gera o diagrama da arquitetura."
           >
             Gerar diagrama
+          </button>
+          <button
+            type="button"
+            className={wantCloudCompare ? "home-composer__tool home-composer__tool--on" : "home-composer__tool"}
+            onClick={() => setWantCloudCompare((value) => !value)}
+            title="Ligado: preenche Google, Azure, AWS e Databricks para o cliente comparar."
+          >
+            Comparar nuvens
           </button>
           <span className="home-composer__grow" />
           <button type="submit" className="home-composer__send" disabled={busy}>

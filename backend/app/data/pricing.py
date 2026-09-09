@@ -744,6 +744,25 @@ AZURE_ADF_DIU = Price(
     "2026-09-08",
     verified=False,
 )
+AZURE_DMS_SOURCE = "https://azure.microsoft.com/pricing/details/database-migration/"
+AZURE_DMS_PREMIUM = Price(
+    "Azure Database Migration Service Premium — 4 vCore",
+    "serviço-hora faturável",
+    1.48,
+    AZURE_DMS_SOURCE,
+    "2026-09-09",
+    verified=False,
+    notes="Estimativa após os 183 dias gratuitos; confirme a tarifa regional no Azure Pricing Calculator.",
+)
+AZURE_STORAGE_MOVER_SOURCE = "https://azure.microsoft.com/products/storage-mover"
+AZURE_STORAGE_MOVER = Price(
+    "Azure Storage Mover",
+    "GB copiado",
+    0.0,
+    AZURE_STORAGE_MOVER_SOURCE,
+    "2026-09-09",
+    notes="O serviço é gratuito; storage, transações e rede são cobrados separadamente.",
+)
 AZURE_ASA_SOURCE = "https://azure.microsoft.com/pricing/details/stream-analytics/"
 AZURE_ASA_SU = Price(
     "Stream Analytics — streaming unit",
@@ -752,6 +771,104 @@ AZURE_ASA_SU = Price(
     AZURE_ASA_SOURCE,
     "2026-09-08",
     verified=False,
+)
+AZURE_ML_SOURCE = "https://azure.microsoft.com/pricing/details/machine-learning/"
+AZURE_ML_COMPUTE = Price(
+    "Azure Machine Learning — compute Standard_D2as_v5",
+    "instância-hora",
+    0.096,
+    AZURE_ML_SOURCE,
+    "2026-09-09",
+    verified=False,
+    notes="Azure ML não cobra taxa de plataforma; compute, storage e serviços associados são cobrados separadamente.",
+)
+AZURE_AI_SEARCH_SOURCE = "https://azure.microsoft.com/pricing/details/search/"
+AZURE_AI_SEARCH_SU = Price(
+    "Azure AI Search — Standard S1",
+    "search unit-hora",
+    0.336,
+    AZURE_AI_SEARCH_SOURCE,
+    "2026-09-09",
+    verified=False,
+)
+AZURE_VISION_SOURCE = "https://azure.microsoft.com/pricing/details/cognitive-services/computer-vision/"
+AZURE_VISION_TRANSACTIONS = Price(
+    "Azure AI Vision — análise de imagens",
+    "1.000 transações",
+    1.00,
+    AZURE_VISION_SOURCE,
+    "2026-09-09",
+    verified=False,
+)
+AZURE_VIDEO_MINUTE = Price(
+    "Azure AI Video — análise",
+    "minuto",
+    0.05,
+    AZURE_VISION_SOURCE,
+    "2026-09-09",
+    verified=False,
+)
+AZURE_MONITOR_SOURCE = "https://azure.microsoft.com/pricing/details/monitor/"
+AZURE_MONITOR_LOGS = Price(
+    "Azure Monitor Logs — ingestão",
+    "GB",
+    2.76,
+    AZURE_MONITOR_SOURCE,
+    "2026-09-09",
+    verified=False,
+)
+AZURE_KEY_VAULT_SOURCE = "https://azure.microsoft.com/pricing/details/key-vault/"
+AZURE_KEY_VAULT_OPS = Price(
+    "Azure Key Vault — operações de secrets",
+    "10.000 operações",
+    0.03,
+    AZURE_KEY_VAULT_SOURCE,
+    "2026-09-09",
+    verified=False,
+)
+AZURE_CONTAINER_APPS_SOURCE = "https://azure.microsoft.com/pricing/details/container-apps/"
+AZURE_CONTAINER_APPS_VCPU = Price(
+    "Azure Container Apps — vCPU",
+    "vCPU-hora",
+    0.0864,
+    AZURE_CONTAINER_APPS_SOURCE,
+    "2026-09-09",
+    verified=False,
+)
+AZURE_CONTAINER_APPS_MEMORY = Price(
+    "Azure Container Apps — memória",
+    "GiB-hora",
+    0.0108,
+    AZURE_CONTAINER_APPS_SOURCE,
+    "2026-09-09",
+    verified=False,
+)
+AZURE_CONTAINER_APPS_REQUESTS = Price(
+    "Azure Container Apps — requisições",
+    "milhão",
+    0.40,
+    AZURE_CONTAINER_APPS_SOURCE,
+    "2026-09-09",
+    verified=False,
+)
+AZURE_POWER_BI_SOURCE = "https://www.microsoft.com/power-platform/products/power-bi/pricing"
+AZURE_POWER_BI_PRO = Price(
+    "Power BI Pro",
+    "usuário/mês",
+    14.00,
+    AZURE_POWER_BI_SOURCE,
+    "2026-09-09",
+    verified=False,
+)
+AZURE_DEVOPS_SOURCE = "https://azure.microsoft.com/pricing/details/devops/azure-devops-services/"
+AZURE_PIPELINES_PARALLEL = Price(
+    "Azure Pipelines — job paralelo hospedado",
+    "job paralelo/mês",
+    40.00,
+    AZURE_DEVOPS_SOURCE,
+    "2026-09-09",
+    verified=False,
+    notes="A franquia gratuita aplicável à organização não foi descontada.",
 )
 
 # ---------------------------------------------------------------------------
@@ -815,6 +932,21 @@ AWS_KINESIS_PUT = Price(
     verified=False,
     notes="1 unit = 25 KB de payload.",
 )
+AWS_FLINK_SOURCE = "https://aws.amazon.com/managed-service-apache-flink/pricing/"
+AWS_FLINK_KPU = Price(
+    "Managed Service for Apache Flink — compute",
+    "KPU-hora",
+    0.11,
+    AWS_FLINK_SOURCE,
+    "2026-09-09",
+)
+AWS_FLINK_STORAGE = Price(
+    "Managed Service for Apache Flink — application storage",
+    "GB/mês",
+    0.10,
+    AWS_FLINK_SOURCE,
+    "2026-09-09",
+)
 AWS_DMS_SOURCE = "https://aws.amazon.com/dms/pricing/"
 AWS_DMS_INSTANCE = Price(
     "DMS — instância dms.t3.medium",
@@ -847,11 +979,166 @@ AWS_MWAA_ENV = Price(
     verified=False,
     notes="Workers extras e meta database à parte.",
 )
+AWS_EC2_SOURCE = "https://aws.amazon.com/ec2/pricing/on-demand/"
+AWS_EC2_M5_XLARGE = Price(
+    "EC2 m5.xlarge para EMR",
+    "instância-hora",
+    0.192,
+    AWS_EC2_SOURCE,
+    "2026-09-09",
+    verified=False,
+)
+AWS_SAGEMAKER_SOURCE = "https://aws.amazon.com/sagemaker/ai/pricing/"
+AWS_SAGEMAKER_COMPUTE = Price(
+    "SageMaker AI — ml.m5.large",
+    "instância-hora",
+    0.115,
+    AWS_SAGEMAKER_SOURCE,
+    "2026-09-09",
+    verified=False,
+)
+AWS_FEATURE_STORE_STORAGE = Price(
+    "SageMaker Feature Store — online storage",
+    "GB/mês",
+    0.23,
+    AWS_SAGEMAKER_SOURCE,
+    "2026-09-09",
+    verified=False,
+)
+AWS_FEATURE_STORE_WRITE = Price(
+    "SageMaker Feature Store — gravações",
+    "milhão",
+    1.25,
+    AWS_SAGEMAKER_SOURCE,
+    "2026-09-09",
+    verified=False,
+)
+AWS_FEATURE_STORE_READ = Price(
+    "SageMaker Feature Store — leituras",
+    "milhão",
+    0.25,
+    AWS_SAGEMAKER_SOURCE,
+    "2026-09-09",
+    verified=False,
+)
+AWS_OPENSEARCH_SOURCE = "https://aws.amazon.com/opensearch-service/pricing/"
+AWS_OPENSEARCH_OCU = Price(
+    "OpenSearch Serverless — compute",
+    "OCU-hora",
+    0.24,
+    AWS_OPENSEARCH_SOURCE,
+    "2026-09-09",
+    verified=False,
+)
+AWS_OPENSEARCH_STORAGE = Price(
+    "OpenSearch Serverless — storage",
+    "GB/mês",
+    0.024,
+    AWS_OPENSEARCH_SOURCE,
+    "2026-09-09",
+    verified=False,
+)
+AWS_REKOGNITION_SOURCE = "https://aws.amazon.com/rekognition/pricing/"
+AWS_REKOGNITION_IMAGE = Price(
+    "Rekognition Image — análise",
+    "1.000 imagens",
+    1.00,
+    AWS_REKOGNITION_SOURCE,
+    "2026-09-09",
+    verified=False,
+)
+AWS_REKOGNITION_VIDEO = Price(
+    "Rekognition Video — análise",
+    "minuto",
+    0.10,
+    AWS_REKOGNITION_SOURCE,
+    "2026-09-09",
+    verified=False,
+)
+AWS_CLOUDWATCH_SOURCE = "https://aws.amazon.com/cloudwatch/pricing/"
+AWS_CLOUDWATCH_LOGS = Price(
+    "CloudWatch Logs — ingestão",
+    "GB",
+    0.50,
+    AWS_CLOUDWATCH_SOURCE,
+    "2026-09-09",
+    verified=False,
+)
+AWS_SECRETS_SOURCE = "https://aws.amazon.com/secrets-manager/pricing/"
+AWS_SECRET_MONTH = Price(
+    "Secrets Manager — secret armazenado",
+    "secret/mês",
+    0.40,
+    AWS_SECRETS_SOURCE,
+    "2026-09-09",
+    verified=False,
+)
+AWS_SECRET_API = Price(
+    "Secrets Manager — chamadas de API",
+    "10.000 chamadas",
+    0.05,
+    AWS_SECRETS_SOURCE,
+    "2026-09-09",
+    verified=False,
+)
+AWS_LAMBDA_SOURCE = "https://aws.amazon.com/lambda/pricing/"
+AWS_LAMBDA_REQUESTS = Price(
+    "Lambda — requisições",
+    "milhão",
+    0.20,
+    AWS_LAMBDA_SOURCE,
+    "2026-09-09",
+    verified=False,
+)
+AWS_LAMBDA_DURATION = Price(
+    "Lambda — duração",
+    "milhão de GB-segundos",
+    16.6667,
+    AWS_LAMBDA_SOURCE,
+    "2026-09-09",
+    verified=False,
+)
+AWS_CODEBUILD_SOURCE = "https://aws.amazon.com/codebuild/pricing/"
+AWS_CODEBUILD_MINUTE = Price(
+    "CodeBuild — general1.small",
+    "minuto",
+    0.005,
+    AWS_CODEBUILD_SOURCE,
+    "2026-09-09",
+    verified=False,
+)
+AWS_QUICKSIGHT_SOURCE = "https://aws.amazon.com/quicksight/pricing/"
+AWS_QUICKSIGHT_AUTHOR = Price(
+    "Amazon QuickSight Enterprise — autor",
+    "autor/mês",
+    24.00,
+    AWS_QUICKSIGHT_SOURCE,
+    "2026-09-09",
+    verified=False,
+)
+AWS_QUICKSIGHT_READER = Price(
+    "Amazon QuickSight Enterprise — leitor",
+    "leitor/mês",
+    5.00,
+    AWS_QUICKSIGHT_SOURCE,
+    "2026-09-09",
+    verified=False,
+    notes="Representa o teto mensal por leitor; cobrança real pode ser por sessão.",
+)
 
 # ---------------------------------------------------------------------------
 # Databricks — AWS Premium list (DBU). VMs da nuvem à parte no compute clássico.
 # ---------------------------------------------------------------------------
 DBX_SOURCE = "https://www.databricks.com/product/pricing"
+DBX_CLOUD_VM = Price(
+    "VM da nuvem para compute clássico (m5.xlarge)",
+    "instância-hora",
+    0.192,
+    "https://aws.amazon.com/ec2/pricing/on-demand/",
+    "2026-09-09",
+    verified=False,
+    notes="Referência AWS para tornar o custo Databricks classic comparável; ajuste ao provedor contratado.",
+)
 DBX_JOBS = Price("Lakeflow Jobs — classic", "DBU", 0.15, DBX_SOURCE, "2026-09-08", verified=False)
 DBX_ALL_PURPOSE = Price("All-Purpose Compute", "DBU", 0.55, DBX_SOURCE, "2026-09-08", verified=False)
 DBX_SQL_CLASSIC = Price("SQL Warehouse Classic", "DBU", 0.22, DBX_SOURCE, "2026-09-08", verified=False)
@@ -880,4 +1167,28 @@ DBX_STORAGE = Price(
     "2026-09-08",
     verified=False,
     notes="DSU. O data lake na nuvem (S3/ADLS/GCS) é cobrado no provedor.",
+)
+DBX_MODEL_SERVING = Price(
+    "Databricks Model Serving — serverless",
+    "DBU",
+    0.07,
+    DBX_SOURCE,
+    "2026-09-09",
+    verified=False,
+)
+DBX_VECTOR_SEARCH = Price(
+    "Databricks Vector Search",
+    "DBU",
+    0.20,
+    DBX_SOURCE,
+    "2026-09-09",
+    verified=False,
+)
+DBX_LAKEHOUSE_MONITORING = Price(
+    "Databricks Lakehouse Monitoring",
+    "DBU",
+    0.20,
+    DBX_SOURCE,
+    "2026-09-09",
+    verified=False,
 )

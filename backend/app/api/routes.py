@@ -68,6 +68,7 @@ async def fill_from_briefing(
     source_provider: str = Form("gcp"),
     target_provider: str = Form("gcp"),
     want_architecture: str = Form("false"),
+    want_cloud_compare: str = Form("false"),
 ) -> dict:
     uploaded = await _read_uploads(files)
     if not uploaded and not notes.strip():
@@ -99,6 +100,7 @@ async def fill_from_briefing(
             intent=intent,
             source_provider=source_provider,
             target_provider=target_provider,
+            want_cloud_compare=want_cloud_compare.strip().lower() in {"1", "true", "yes", "on"},
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc

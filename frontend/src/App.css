@@ -675,6 +675,21 @@
   font-weight: 800;
 }
 
+.cloud-compare {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.cloud-compare h3 {
+  margin: 0 0 8px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--purple-500);
+}
+
 .project-summary__export {
   width: 100%;
   margin-top: 14px;

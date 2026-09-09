@@ -11,7 +11,7 @@ from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
 from google.genai import types
 
-from app.agent.agent import root_agent
+from app.agent.agent import CLOUD_FUNCTION_MAP, root_agent
 from app.domain.calculators.registry import get_calculator
 
 APP_NAME = "calculadora_gcp"
@@ -172,7 +172,14 @@ def _list_call(provider: str) -> str:
     return f"list_calculator_services('{provider}')"
 
 
-def _task_prompt(intent: str, source_provider: str, target_provider: str, notes: str, names: list[str]) -> str:
+def _task_prompt(
+    intent: str,
+    source_provider: str,
+    target_provider: str,
+    notes: str,
+    names: list[str],
+    want_cloud_compare: bool = False,
+) -> str:
     source = PROVIDER_LABELS.get(source_provider, source_provider)
     target = PROVIDER_LABELS.get(target_provider, target_provider)
     extra = f" Notas extras do usuário (respeite preferências de nuvem): {notes}" if notes.strip() else ""
@@ -197,10 +204,23 @@ def _task_prompt(intent: str, source_provider: str, target_provider: str, notes:
             f"{'podendo usar várias nuvens' if target_provider == 'multicloud' else f'só em {target}'}. "
             f"Não lote o catálogo. Anexos: {files}.{extra}"
         )
+    if want_cloud_compare:
+        return (
+            "Tarefa: CONTEXTO com COMPARAÇÃO DE NUVENS. "
+            "Monte a proposta por FUNÇÃO e preencha o equivalente em Google, Azure, AWS e Databricks. "
+            "Exemplos: Cloud Storage = S3 = ADLS = dbx_storage; BigQuery = Athena/Redshift = Synapse SQL = SQL Warehouse; "
+            "Pub/Sub = Kinesis = Event Hubs; Dataflow = Glue = Data Factory = Jobs/DLT; "
+            "Dataproc = EMR = Synapse Spark = All-Purpose; Datastream = DMS; Composer = MWAA. "
+            f"{CLOUD_FUNCTION_MAP} "
+            "Mesmos volumes em cada linha da tabela. Se não houver equivalente no catálogo, omita essa nuvem nessa função. "
+            f"Anexos: {files or 'nenhum'}.{extra} "
+            "Chame list_calculator_services('multicloud')."
+        )
     return (
         f"Tarefa: CONTEXTO. Proposta de solução ({target}). "
         f"Preencha scenario='to_be' com os serviços necessários"
-        f"{' em qualquer nuvem do catálogo' if target_provider == 'multicloud' else f' só em {target}'}. "
+        f"{' na nuvem da proposta (se não citarem nuvem, use Google)' if target_provider == 'multicloud' else f' só em {target}'}. "
+        "Não preencha as outras nuvens só para comparar. "
         f"Anexos: {files or 'nenhum'}.{extra} "
         f"Chame {_list_call(target_provider)}."
     )
@@ -213,6 +233,7 @@ async def run_fill_agent(
     intent: str = "context",
     source_provider: str = "gcp",
     target_provider: str = "gcp",
+    want_cloud_compare: bool = False,
 ) -> AgentFillResult:
     _require_api_key()
     if not files and not notes.strip():
@@ -225,7 +246,7 @@ async def run_fill_agent(
 
     names = [item.name for item in files]
     parts: list[types.Part] = [
-        types.Part(text=_task_prompt(intent, source_provider, target_provider, notes, names))
+        types.Part(text=_task_prompt(intent, source_provider, target_provider, notes, names, want_cloud_compare))
     ]
     for item in files:
         parts.extend(_file_parts(item.name, item.data))
