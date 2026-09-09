@@ -5,6 +5,7 @@ from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from app.agent.architecture import generate_architecture_png
 from app.agent.runner import Attachment, run_fill_agent
 from app.domain.calculators.registry import get_calculator, list_definitions
+from app.domain.shares import load_share, save_share
 from app.domain.schemas import (
     CalculationResult,
     ProjectCalculationRequest,
@@ -134,4 +135,28 @@ async def fill_from_briefing(
         "filled_to_be": result.filled_to_be,
         "summary": result.summary,
         "architecture_image": architecture_image,
+    }
+
+
+@router.post("/shares")
+def create_share(payload: dict) -> dict:
+    enabled = payload.get("enabled") or {}
+    presets = payload.get("presets") or {}
+    if not isinstance(enabled, dict) or not isinstance(presets, dict):
+        raise HTTPException(status_code=400, detail="Payload inválido.")
+    if not any(enabled.values()):
+        raise HTTPException(status_code=400, detail="Marque ao menos um serviço para compartilhar.")
+    share_id = save_share({"enabled": enabled, "presets": presets})
+    return {"id": share_id, "path": f"/s/{share_id}"}
+
+
+@router.get("/shares/{share_id}")
+def get_share(share_id: str) -> dict:
+    data = load_share(share_id)
+    if data is None:
+        raise HTTPException(status_code=404, detail="Link mágico inválido ou expirado.")
+    return {
+        "id": data.get("id", share_id),
+        "enabled": data.get("enabled") or {},
+        "presets": data.get("presets") or {},
     }

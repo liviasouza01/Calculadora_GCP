@@ -34,9 +34,18 @@
   font-family: inherit;
 }
 
-.app__clear:hover {
-  color: var(--text);
-  border-color: var(--border-strong);
+.app__header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.app__share-url {
+  margin: 10px 0 0;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  word-break: break-all;
 }
 
 .app__header h1 {

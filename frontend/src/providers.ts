@@ -18,6 +18,8 @@ export const APP_TABS: { id: AppTab; label: string }[] = [
   { id: "compare", label: "Comparar" },
 ];
 
+export const CLIENT_TABS: { id: AppTab; label: string }[] = [...PROVIDERS];
+
 export const APP_TITLE = "Calculadora de Dados, ML e Visão Computacional";
 
 export const PROVIDER_COPY: Record<
