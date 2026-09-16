@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import type {
+  AgentComparisonGroup,
   AppTab,
   CalculationResult,
   CloudProvider,
@@ -67,6 +68,7 @@ export default function App({ flags }: { flags: AppFlags }) {
   const [enabled, setEnabled] = useState<Record<string, boolean>>({});
   const [presets, setPresets] = useState<Record<string, ServiceInputs>>({});
   const [results, setResults] = useState<Record<string, CalculationResult | null>>({});
+  const [comparisonGroups, setComparisonGroups] = useState<AgentComparisonGroup[]>([]);
   const [asIsInputs, setAsIsInputs] = useState<Record<string, ServiceInputs>>({});
   const [toBeInputs, setToBeInputs] = useState<Record<string, ServiceInputs>>({});
   const [asIsResults, setAsIsResults] = useState<Record<string, CalculationResult | null>>({});
@@ -113,6 +115,7 @@ export default function App({ flags }: { flags: AppFlags }) {
         }
         setEnabled(share.enabled);
         setPresets(share.presets);
+        setComparisonGroups(share.comparison_groups ?? []);
         calculateFilled(
           Object.fromEntries(
             Object.entries(share.presets).filter(([serviceId]) => share.enabled[serviceId]),
@@ -131,9 +134,14 @@ export default function App({ flags }: { flags: AppFlags }) {
     };
   }, [shareId, services]);
 
-  function applyProposal(filled: Record<string, ServiceInputs>, image: string | null) {
+  function applyProposal(
+    filled: Record<string, ServiceInputs>,
+    image: string | null,
+    groups: AgentComparisonGroup[],
+  ) {
     setPresets(filled);
     setEnabled(enabledMap(filled));
+    setComparisonGroups(groups);
     calculateFilled(filled);
     setArchitectureImage(image);
   }
@@ -146,6 +154,7 @@ export default function App({ flags }: { flags: AppFlags }) {
     setEnabled({});
     setPresets({});
     setResults({});
+    setComparisonGroups([]);
     setAsIsInputs({});
     setToBeInputs({});
     setAsIsResults({});
@@ -162,7 +171,11 @@ export default function App({ flags }: { flags: AppFlags }) {
     setShareBusy(true);
     setShareUrl(null);
     try {
-      const created = await createShare({ enabled, presets });
+      const created = await createShare({
+        enabled,
+        presets,
+        comparison_groups: comparisonGroups,
+      });
       const url = magicLink(created.id);
       await navigator.clipboard.writeText(url);
       setShareUrl(url);
@@ -326,7 +339,9 @@ export default function App({ flags }: { flags: AppFlags }) {
             onMessages={setChatMessages}
             onBusy={setChatBusy}
             onError={setChatError}
-            onComplete={(filled, image) => applyProposal(filled, image)}
+            onComplete={(filled, image, groups) =>
+              applyProposal(filled, image, groups)
+            }
           />
         ) : (
           <>
@@ -423,6 +438,7 @@ export default function App({ flags }: { flags: AppFlags }) {
             cloudTotals={cloudTotals.length > 1 ? cloudTotals : undefined}
             reportServices={reportServices}
             reportResults={reportResults}
+            comparisonGroups={comparisonGroups}
           />
         )}
           </>

@@ -170,7 +170,10 @@ class AzureDmsCalculator(BaseCalculator):
             service_id=self.definition.id,
             line_items=line_items,
             total=round(sum(i.subtotal for i in line_items), 2),
-            notes=["A tarifa é regional; destino, storage e rede são cobrados separadamente."],
+            notes=[
+                "O Premium de 4 vCore é gratuito nos primeiros 183 dias após a criação do serviço.",
+                "Depois desse período, a tarifa é regional; destino, storage e rede são cobrados separadamente.",
+            ],
         )
 
 

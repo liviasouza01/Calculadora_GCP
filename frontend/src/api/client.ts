@@ -1,11 +1,11 @@
 import type {
+  AgentComparisonGroup,
   CalculationResult,
   ServiceDefinition,
   ServiceInputs,
 } from "../types";
-import { PUBLIC_APP_URL } from "../shareUrl";
-
-const BASE_URL = "/api";
+const API_ORIGIN = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
+const BASE_URL = API_ORIGIN ? `${API_ORIGIN}/api` : "/api";
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const response = await fetch(`${BASE_URL}${path}`, {
@@ -55,6 +55,7 @@ export interface AgentFillResult {
   filled_services: Record<string, ServiceInputs>;
   filled_as_is?: Record<string, ServiceInputs>;
   filled_to_be?: Record<string, ServiceInputs>;
+  comparison_groups?: AgentComparisonGroup[];
   summary: string;
   architecture_image?: string | null;
 }
@@ -84,13 +85,15 @@ export interface CalculatorShare {
   id: string;
   enabled: Record<string, boolean>;
   presets: Record<string, ServiceInputs>;
+  comparison_groups?: AgentComparisonGroup[];
 }
 
 export async function createShare(payload: {
   enabled: Record<string, boolean>;
   presets: Record<string, ServiceInputs>;
+  comparison_groups?: AgentComparisonGroup[];
 }): Promise<{ id: string; path: string }> {
-  const response = await fetch(`${PUBLIC_APP_URL}/api/shares`, {
+  const response = await fetch(`${BASE_URL}/shares`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),

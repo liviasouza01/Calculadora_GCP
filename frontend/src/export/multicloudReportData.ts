@@ -1,5 +1,6 @@
 import { PROVIDERS } from "../providers";
 import type {
+  AgentComparisonGroup,
   CalculationResult,
   CloudProvider,
   ServiceDefinition,
@@ -28,8 +29,12 @@ export const MULTICLOUD_FUNCTIONS: {
     serviceIds: ["pubsub", "azure_event_hubs", "aws_kinesis"],
   },
   {
-    name: "CDC e replicação",
-    serviceIds: ["datastream", "azure_dms", "aws_dms"],
+    name: "CDC serverless por volume",
+    serviceIds: ["datastream"],
+  },
+  {
+    name: "Migração e replicação gerenciada",
+    serviceIds: ["azure_dms", "aws_dms"],
   },
   {
     name: "Transferência de arquivos",
@@ -147,7 +152,7 @@ export const MULTICLOUD_FUNCTIONS: {
   },
   {
     name: "BI e dashboards",
-    serviceIds: ["looker", "azure_power_bi", "aws_quicksight", "dbx_sql"],
+    serviceIds: ["looker", "azure_power_bi", "aws_quicksight"],
   },
 ];
 
@@ -169,12 +174,21 @@ export interface ComparisonValue {
 export interface ComparisonRow {
   functionName: string;
   values: Partial<Record<CloudProvider, ComparisonValue>>;
+  rationale?: string;
+  comparability?: AgentComparisonGroup["comparability"];
 }
 
 export interface MulticloudReportData {
   isMulticloud: boolean;
   providers: ProviderReportGroup[];
   comparisons: ComparisonRow[];
+}
+
+interface ReportFunctionGroup {
+  name: string;
+  serviceIds: string[];
+  rationale?: string;
+  comparability?: AgentComparisonGroup["comparability"];
 }
 
 function providerOf(service: ServiceDefinition): CloudProvider {
@@ -184,6 +198,7 @@ function providerOf(service: ServiceDefinition): CloudProvider {
 export function buildMulticloudReportData(
   services: ServiceDefinition[],
   results: CalculationResult[],
+  comparisonGroups: AgentComparisonGroup[] = [],
 ): MulticloudReportData {
   const definitions = new Map(services.map((service) => [service.id, service]));
   const active = results.flatMap((result) => {
@@ -213,8 +228,17 @@ export function buildMulticloudReportData(
 
   const mappedIds = new Set<string>();
   const comparisons: ComparisonRow[] = [];
+  const groups: ReportFunctionGroup[] =
+    comparisonGroups.length > 0
+      ? comparisonGroups.map((group) => ({
+          name: group.function_name,
+          serviceIds: group.service_ids,
+          rationale: group.rationale,
+          comparability: group.comparability,
+        }))
+      : MULTICLOUD_FUNCTIONS;
 
-  for (const group of MULTICLOUD_FUNCTIONS) {
+  for (const group of groups) {
     const matches = active.filter(({ definition }) =>
       group.serviceIds.includes(definition.id),
     );
@@ -239,7 +263,12 @@ export function buildMulticloudReportData(
       };
       providerMatches.forEach(({ definition }) => mappedIds.add(definition.id));
     }
-    comparisons.push({ functionName: group.name, values });
+    comparisons.push({
+      functionName: group.name,
+      values,
+      rationale: group.rationale,
+      comparability: group.comparability,
+    });
   }
 
   for (const item of active) {
@@ -249,6 +278,12 @@ export function buildMulticloudReportData(
     const provider = providerOf(item.definition);
     comparisons.push({
       functionName: item.definition.name,
+      rationale:
+        comparisonGroups.length > 0
+          ? "Serviço não agrupado pelo agente com um equivalente direto."
+          : undefined,
+      comparability:
+        comparisonGroups.length > 0 ? "no_direct_equivalent" : undefined,
       values: {
         [provider]: {
           serviceNames: [item.definition.name],

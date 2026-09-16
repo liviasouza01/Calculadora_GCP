@@ -307,8 +307,8 @@ class AwsQuickSightCalculator(BaseCalculator):
         provider="aws",
         description="BI gerenciado para autores e leitores de dashboards.",
         fields=[
-            FieldSchema(id="authors", label="Autores", type="number", unit="autores/mês", default=2, min=0),
-            FieldSchema(id="readers", label="Leitores", type="number", unit="leitores/mês", default=10, min=0),
+            FieldSchema(id="authors", label="Autores", type="number", unit="autores/mês", default=10, min=0),
+            FieldSchema(id="readers", label="Leitores", type="number", unit="leitores/mês", default=0, min=0),
         ],
         pricing_references=[
             to_reference(p.AWS_QUICKSIGHT_AUTHOR),

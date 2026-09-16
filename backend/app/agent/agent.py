@@ -17,47 +17,25 @@ from app.domain.calculators.registry import get_calculator, list_definitions
 MODEL_ID = "gemini-flash-latest"
 
 CLOUD_FUNCTION_MAP = """
-Quando comparar nuvens, preencha SOMENTE equivalentes da mesma função, com os MESMOS volumes.
-Use estes ids do catálogo:
+Na comparação de nuvens, decida os equivalentes com base na arquitetura e no modelo
+de cobrança de cada serviço. Não existe um mapa fixo obrigatório.
 
-Função | Google | Azure | AWS | Databricks
-Object storage | storage | azure_adls | aws_s3 | dbx_storage
-Warehouse / analytics SQL | bigquery | azure_synapse_sql | aws_athena e aws_redshift | dbx_sql
-Eventos / mensageria | pubsub | azure_event_hubs | aws_kinesis | (sem equivalente; não invente)
-CDC / replicação | datastream | azure_dms | aws_dms | (sem equivalente)
-Transferência de arquivos | data_transfer | azure_storage_mover | aws_datasync | (sem equivalente)
-ETL / pipelines batch | dataflow (job_type batch) | azure_data_factory | aws_glue | dbx_jobs e dbx_dlt
-Spark / processamento | dataproc | azure_synapse_spark | aws_emr | dbx_all_purpose
-Orquestração | composer | azure_data_factory | aws_mwaa | dbx_jobs
-Streaming analytics | dataflow (job_type streaming) | azure_stream_analytics | aws_flink | dbx_jobs
-Treinamento ML | training ou automl_vision | azure_ml_training | aws_sagemaker_training | dbx_jobs
-Inferência ML | prediction | azure_ml_endpoint | aws_sagemaker_endpoint | dbx_model_serving
-Notebooks ML | vertex_workbench | azure_ml_workbench | aws_sagemaker_notebook | dbx_all_purpose
-Feature store | feature_store | (sem cobrança separada comparável) | aws_feature_store | (sem cobrança separada comparável)
-Busca vetorial | vector_search | azure_ai_search | aws_opensearch | dbx_vector_search
-Monitoramento de modelos | model_monitoring | azure_monitor | aws_cloudwatch | dbx_lakehouse_monitoring
-Análise de imagens | vision_api | azure_ai_vision | aws_rekognition_image | (sem equivalente; não invente)
-Análise de vídeo | video_intelligence | azure_ai_video | aws_rekognition_video | (sem equivalente; não invente)
-Aplicação serverless | cloud_run | azure_container_apps | aws_lambda | (sem equivalente; não invente)
-Logs e observabilidade | cloud_operations | azure_monitor | aws_cloudwatch | (sem equivalente; não invente)
-Secrets | secret_manager | azure_key_vault | aws_secrets_manager | (sem equivalente; não invente)
-CI/CD | cloud_build | azure_pipelines | aws_codebuild | (sem equivalente; não invente)
-BI e dashboards | looker | azure_power_bi | aws_quicksight | dbx_sql (dashboards incluídos no warehouse)
-
-Regras:
-- Se a proposta usa Cloud Storage, preencha também azure_adls, aws_s3 e dbx_storage com o mesmo GB.
-- dbx_storage mede o armazenamento gerenciado pelo Databricks e complementa o object storage
-  da nuvem hospedeira; mantenha o mesmo volume para tornar essa parcela explícita.
-- Se usa BigQuery, preencha azure_synapse_sql, aws_athena (e redshift se for warehouse) e dbx_sql.
-- Não reutilize aws_kinesis como processamento: ele representa mensageria; para streaming
-  analytics use aws_flink.
-- Em ETL batch, defina explicitamente dataflow.job_type como batch.
-- Para ML, visão e operação, use os equivalentes explícitos acima e preserve horas, GB,
-  número de transações, imagens, minutos e requisições sempre que as unidades permitirem.
-- Para BI, use azure_power_bi, aws_quicksight e os dashboards incluídos em dbx_sql.
-- Databricks não é uma nuvem de infraestrutura: compute clássico deve incluir DBUs e
-  cloud_vm_hours; serverless não deve adicionar VM.
-- Não misture funções (ex.: não use S3 no lugar de BigQuery).
+Regras de consistência:
+- Agrupe somente serviços que atendem à mesma função no cenário descrito.
+- Registre cada grupo com set_comparison_group, incluindo justificativa e comparabilidade.
+- Use comparability='direct' quando função, unidade e escopo forem equivalentes;
+  'approximate' quando houver diferenças relevantes; e 'no_direct_equivalent' quando
+  uma função não possuir contraparte adequada.
+- Preserve volumes apenas quando as unidades forem comparáveis. Explique conversões.
+- Para analytics na AWS, escolha aws_athena OU aws_redshift, nunca ambos automaticamente.
+- Datastream é CDC serverless cobrado por volume: não use azure_dms nem aws_dms como
+  equivalentes automáticos. Só use DMS quando o briefing pedir migração ou replicação
+  baseada em instância.
+- Para BI por licença, preserve o número de criadores: use azure_power_bi.users e
+  aws_quicksight.authors com o mesmo total de usuários; defina aws_quicksight.readers=0,
+  salvo se o briefing separar autores e leitores. Não use dbx_sql como licença de BI.
+- Databricks não é uma nuvem de infraestrutura. Não invente serviços para preencher
+  todas as colunas e não misture funções apenas para produzir uma comparação completa.
 """
 
 
@@ -190,8 +168,57 @@ def fill_service(
     }
 
 
+def set_comparison_group(
+    function_name: str,
+    service_ids_json: str,
+    rationale: str,
+    comparability: str,
+    tool_context: ToolContext,
+) -> dict:
+    """Registra um grupo de equivalência decidido pelo agente para o relatório.
+
+    Args:
+        function_name: função arquitetural comparada.
+        service_ids_json: lista JSON dos ids considerados nesta função.
+        rationale: justificativa curta para a equivalência ou ausência dela.
+        comparability: direct, approximate ou no_direct_equivalent.
+        tool_context: injetado pelo ADK.
+    """
+    try:
+        service_ids = json.loads(service_ids_json)
+    except json.JSONDecodeError:
+        return {"status": "error", "error_message": "service_ids_json deve ser uma lista JSON."}
+    if not isinstance(service_ids, list) or not all(isinstance(item, str) for item in service_ids):
+        return {"status": "error", "error_message": "service_ids_json deve conter apenas ids."}
+
+    unique_ids = list(dict.fromkeys(service_ids))
+    unknown = [service_id for service_id in unique_ids if get_calculator(service_id) is None]
+    if unknown:
+        return {"status": "error", "error_message": f"Serviços desconhecidos: {unknown}"}
+
+    level = str(comparability or "").strip().lower()
+    if level not in {"direct", "approximate", "no_direct_equivalent"}:
+        return {"status": "error", "error_message": "comparability inválida."}
+    name = str(function_name or "").strip()
+    if not name or not unique_ids:
+        return {"status": "error", "error_message": "Informe a função e ao menos um serviço."}
+
+    group = {
+        "function_name": name,
+        "service_ids": unique_ids,
+        "rationale": str(rationale or "").strip(),
+        "comparability": level,
+    }
+    groups = list(tool_context.state.get("comparison_groups", []) or [])
+    groups = [item for item in groups if item.get("function_name") != name]
+    groups.append(group)
+    tool_context.state["comparison_groups"] = groups
+    return {"status": "success", "group": group}
+
+
 list_services_tool = FunctionTool(func=list_calculator_services)
 fill_service_tool = FunctionTool(func=fill_service)
+comparison_group_tool = FunctionTool(func=set_comparison_group)
 
 root_agent = Agent(
     model=MODEL_ID,
@@ -209,14 +236,16 @@ Fluxo obrigatório:
    - scenario='as_is' para o que JÁ existe. Se a origem for multicloud, use ids de qualquer nuvem que aparecer no anexo.
    - scenario='to_be' para a proposta. Se o destino for multicloud, misture nuvens conforme as notas extras.
 4. Tarefas:
-   - CONTEXTO: só scenario='to_be'. Se pedirem comparação de nuvens, preencha cada função nas 4 nuvens pelos equivalentes abaixo, mesmos volumes. Senão, só a nuvem da proposta.
+   - CONTEXTO: só scenario='to_be'. Se pedirem comparação de nuvens, escolha a melhor
+     arquitetura para cada nuvem e registre os grupos comparáveis com set_comparison_group.
+     Não force um serviço em todas as nuvens. Senão, só a nuvem da proposta.
 
-Equivalências (ids):
+Critérios de comparação:
 """ + CLOUD_FUNCTION_MAP + """
    - COMPARAR: as_is na origem e to_be no destino (destino pode ser uma nuvem ou multicloud).
    - COMPLEMENTAR: as_is = o anexo; to_be = anexo + gaps. Destino pode ser a mesma nuvem ou multicloud.
 5. Responda em português com AS IS vs TO-BE e as premissas.
 
 Não calcule preços você mesmo. Só preencha os inputs via fill_service.""",
-    tools=[list_services_tool, fill_service_tool],
+    tools=[list_services_tool, fill_service_tool, comparison_group_tool],
 )

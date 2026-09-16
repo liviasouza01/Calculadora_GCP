@@ -1,6 +1,10 @@
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
-import type { CalculationResult, ServiceDefinition } from "../types";
+import type {
+  AgentComparisonGroup,
+  CalculationResult,
+  ServiceDefinition,
+} from "../types";
 import { money } from "../format";
 import {
   buildMulticloudReportData,
@@ -12,6 +16,14 @@ function tableFinalY(doc: jsPDF, fallback: number): number {
     (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable
       .finalY ?? fallback
   );
+}
+
+function comparabilityLabel(
+  value: AgentComparisonGroup["comparability"],
+): string {
+  if (value === "direct") return "Direta";
+  if (value === "approximate") return "Aproximada";
+  return "Sem equivalente direto";
 }
 
 function addMulticloudService(
@@ -137,7 +149,15 @@ function downloadMulticloudReport(
     startY: y,
     head: [["Funcao", "Google", "Azure", "AWS", "Databricks"]],
     body: report.comparisons.map((row) => [
-      row.functionName,
+      [
+        row.functionName,
+        row.comparability
+          ? `Comparabilidade: ${comparabilityLabel(row.comparability)}`
+          : "",
+        row.rationale ?? "",
+      ]
+        .filter(Boolean)
+        .join("\n"),
       ...(["gcp", "azure", "aws", "databricks"] as const).map((provider) => {
         const value = row.values[provider];
         return value
@@ -195,9 +215,14 @@ export function downloadProjectReport(params: {
   results: CalculationResult[];
   title?: string;
   disclaimer?: string;
+  comparisonGroups?: AgentComparisonGroup[];
 }): void {
   const { services, results } = params;
-  const multicloudReport = buildMulticloudReportData(services, results);
+  const multicloudReport = buildMulticloudReportData(
+    services,
+    results,
+    params.comparisonGroups,
+  );
   if (multicloudReport.isMulticloud) {
     downloadMulticloudReport(params, multicloudReport);
     return;

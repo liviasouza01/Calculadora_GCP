@@ -135,6 +135,7 @@ async def fill_from_briefing(
         "filled_services": result.filled_services,
         "filled_as_is": result.filled_as_is,
         "filled_to_be": result.filled_to_be,
+        "comparison_groups": result.comparison_groups,
         "summary": result.summary,
         "architecture_image": architecture_image,
     }
@@ -144,11 +145,22 @@ async def fill_from_briefing(
 def create_share(payload: dict) -> dict:
     enabled = payload.get("enabled") or {}
     presets = payload.get("presets") or {}
-    if not isinstance(enabled, dict) or not isinstance(presets, dict):
+    comparison_groups = payload.get("comparison_groups") or []
+    if (
+        not isinstance(enabled, dict)
+        or not isinstance(presets, dict)
+        or not isinstance(comparison_groups, list)
+    ):
         raise HTTPException(status_code=400, detail="Payload inválido.")
     if not any(enabled.values()):
         raise HTTPException(status_code=400, detail="Marque ao menos um serviço para compartilhar.")
-    share_id = save_share({"enabled": enabled, "presets": presets})
+    share_id = save_share(
+        {
+            "enabled": enabled,
+            "presets": presets,
+            "comparison_groups": comparison_groups,
+        }
+    )
     return {"id": share_id, "path": f"/s/{share_id}"}
 
 
@@ -161,4 +173,5 @@ def get_share(share_id: str) -> dict:
         "id": data.get("id", share_id),
         "enabled": data.get("enabled") or {},
         "presets": data.get("presets") or {},
+        "comparison_groups": data.get("comparison_groups") or [],
     }

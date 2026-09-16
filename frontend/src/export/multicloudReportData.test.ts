@@ -98,6 +98,35 @@ describe("buildMulticloudReportData", () => {
 
     expect(model.isMulticloud).toBe(false);
   });
+
+  it("uses comparison groups selected by the agent", () => {
+    const model = buildMulticloudReportData(
+      services,
+      [
+        result("bigquery", 60),
+        result("aws_athena", 25),
+        result("aws_redshift", 40),
+      ],
+      [
+        {
+          function_name: "Consulta analítica serverless",
+          service_ids: ["bigquery", "aws_athena"],
+          rationale: "Serviços sob demanda escolhidos para este cenário.",
+          comparability: "direct",
+        },
+      ],
+    );
+
+    expect(model.comparisons[0]).toMatchObject({
+      functionName: "Consulta analítica serverless",
+      rationale: "Serviços sob demanda escolhidos para este cenário.",
+      comparability: "direct",
+    });
+    expect(model.comparisons[0].values.aws?.serviceNames).toEqual(["Athena"]);
+    expect(
+      model.comparisons.some((row) => row.functionName === "Redshift"),
+    ).toBe(true);
+  });
 });
 
 describe("MULTICLOUD_FUNCTIONS", () => {
@@ -123,5 +152,26 @@ describe("MULTICLOUD_FUNCTIONS", () => {
       "aws_redshift",
       "dbx_sql",
     ]);
+  });
+
+  it("keeps serverless CDC separate from migration services", () => {
+    expect(
+      MULTICLOUD_FUNCTIONS.find(
+        (group) => group.name === "CDC serverless por volume",
+      )?.serviceIds,
+    ).toEqual(["datastream"]);
+    expect(
+      MULTICLOUD_FUNCTIONS.find(
+        (group) => group.name === "Migração e replicação gerenciada",
+      )?.serviceIds,
+    ).toEqual(["azure_dms", "aws_dms"]);
+  });
+
+  it("does not compare Databricks SQL compute with BI user licenses", () => {
+    expect(
+      MULTICLOUD_FUNCTIONS.find(
+        (group) => group.name === "BI e dashboards",
+      )?.serviceIds,
+    ).toEqual(["looker", "azure_power_bi", "aws_quicksight"]);
   });
 });

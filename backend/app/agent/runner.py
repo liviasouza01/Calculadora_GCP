@@ -38,6 +38,7 @@ class AgentFillResult:
     filled_services: dict[str, dict[str, float | str]]
     filled_as_is: dict[str, dict[str, float | str]]
     filled_to_be: dict[str, dict[str, float | str]]
+    comparison_groups: list[dict]
     summary: str
 
 
@@ -207,12 +208,12 @@ def _task_prompt(
     if want_cloud_compare:
         return (
             "Tarefa: CONTEXTO com COMPARAÇÃO DE NUVENS. "
-            "Monte a proposta por FUNÇÃO e preencha o equivalente em Google, Azure, AWS e Databricks. "
-            "Exemplos: Cloud Storage = S3 = ADLS = dbx_storage; BigQuery = Athena/Redshift = Synapse SQL = SQL Warehouse; "
-            "Pub/Sub = Kinesis = Event Hubs; Dataflow = Glue = Data Factory = Jobs/DLT; "
-            "Dataproc = EMR = Synapse Spark = All-Purpose; Datastream = DMS; Composer = MWAA. "
+            "Monte a melhor proposta para Google, Azure, AWS e Databricks conforme o cenário. "
+            "Você decide quais serviços são funcionalmente comparáveis depois de analisar "
+            "descrições, unidades e modelos de cobrança do catálogo. "
             f"{CLOUD_FUNCTION_MAP} "
-            "Mesmos volumes em cada linha da tabela. Se não houver equivalente no catálogo, omita essa nuvem nessa função. "
+            "Depois de preencher os serviços, chame set_comparison_group uma vez por função "
+            "relevante. Se não houver equivalente, não force a coluna e explique no grupo. "
             f"Anexos: {files or 'nenhum'}.{extra} "
             "Chame list_calculator_services('multicloud')."
         )
@@ -285,10 +286,12 @@ async def run_fill_agent(
     filled = {}
     filled_as_is_raw = {}
     filled_to_be_raw = {}
+    comparison_groups = []
     if session is not None:
         filled = session.state.get("filled_services", {}) or {}
         filled_as_is_raw = session.state.get("filled_as_is", {}) or {}
         filled_to_be_raw = session.state.get("filled_to_be", {}) or {}
+        comparison_groups = session.state.get("comparison_groups", []) or []
 
     def _keep(bucket: dict, provider: str) -> dict[str, dict[str, float | str]]:
         kept: dict[str, dict[str, float | str]] = {}
@@ -309,5 +312,6 @@ async def run_fill_agent(
         filled_services=to_be,
         filled_as_is=as_is,
         filled_to_be=to_be,
+        comparison_groups=comparison_groups,
         summary=summary,
     )

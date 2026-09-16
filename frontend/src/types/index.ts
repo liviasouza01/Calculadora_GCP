@@ -57,4 +57,11 @@ export interface CalculationResult {
   notes: string[];
 }
 
+export interface AgentComparisonGroup {
+  function_name: string;
+  service_ids: string[];
+  rationale: string;
+  comparability: "direct" | "approximate" | "no_direct_equivalent";
+}
+
 export type ServiceInputs = Record<string, number | string>;

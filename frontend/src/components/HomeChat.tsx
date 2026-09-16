@@ -1,7 +1,11 @@
 import { useRef, useState } from "react";
 import type { FormEvent, KeyboardEvent } from "react";
 import Markdown from "react-markdown";
-import type { CloudProvider, ServiceInputs } from "../types";
+import type {
+  AgentComparisonGroup,
+  CloudProvider,
+  ServiceInputs,
+} from "../types";
 import { fillFromBriefing } from "../api/client";
 import { APP_TITLE, PROVIDERS } from "../providers";
 
@@ -19,7 +23,11 @@ interface Props {
   error: string | null;
   filledProviders: CloudProvider[];
   onOpenTab: (tab: CloudProvider) => void;
-  onComplete: (filled: Record<string, ServiceInputs>, image: string | null) => void;
+  onComplete: (
+    filled: Record<string, ServiceInputs>,
+    image: string | null,
+    comparisonGroups: AgentComparisonGroup[],
+  ) => void;
   onMessages: (messages: ChatMessage[]) => void;
   onBusy: (busy: boolean) => void;
   onError: (error: string | null) => void;
@@ -98,7 +106,11 @@ export function HomeChat({
           image,
         },
       ]);
-      onComplete(result.filled_to_be ?? result.filled_services, image);
+      onComplete(
+        result.filled_to_be ?? result.filled_services,
+        image,
+        result.comparison_groups ?? [],
+      );
       setText("");
       setFiles([]);
       if (fileRef.current) {

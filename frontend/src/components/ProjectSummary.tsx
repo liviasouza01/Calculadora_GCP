@@ -1,4 +1,9 @@
-import type { CalculationResult, CloudProvider, ServiceDefinition } from "../types";
+import type {
+  AgentComparisonGroup,
+  CalculationResult,
+  CloudProvider,
+  ServiceDefinition,
+} from "../types";
 import { downloadProjectReport } from "../export/reportPdf";
 import { money } from "../format";
 
@@ -11,6 +16,7 @@ interface Props {
   cloudTotals?: { id: CloudProvider; label: string; total: number }[];
   reportServices?: ServiceDefinition[];
   reportResults?: CalculationResult[];
+  comparisonGroups?: AgentComparisonGroup[];
 }
 
 export function ProjectSummary({
@@ -22,6 +28,7 @@ export function ProjectSummary({
   cloudTotals,
   reportServices,
   reportResults,
+  comparisonGroups,
 }: Props) {
   const names = new Map(services.map((service) => [service.id, service.name]));
   const active = Object.values(results).filter(
@@ -81,6 +88,7 @@ export function ProjectSummary({
             results: exportResults,
             title: pdfTitle,
             disclaimer,
+            comparisonGroups,
           })
         }
       >
